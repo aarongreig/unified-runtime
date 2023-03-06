@@ -686,7 +686,10 @@ typedef enum ur_device_info_t {
                                                                 ///< The reference count returned should be considered immediately stale.
                                                                 ///< It is unsuitable for general use in applications. This feature is
                                                                 ///< provided for identifying memory leaks.
-    UR_DEVICE_INFO_IL_VERSION = 65,                             ///< char[]: IL version
+    UR_DEVICE_INFO_IL_VERSION = 65,                             ///< char[] Null-terminated IL version string.
+                                                                ///< Composed in the form `<IL>_<MAJOR>_<MINOR>`, where `<IL>` is a
+                                                                ///< prefix uniquely identifying which intermediate language the device
+                                                                ///< accepts.
     UR_DEVICE_INFO_NAME = 66,                                   ///< char[]: Device name
     UR_DEVICE_INFO_VENDOR = 67,                                 ///< char[]: Device vendor
     UR_DEVICE_INFO_DRIVER_VERSION = 68,                         ///< char[]: Driver version

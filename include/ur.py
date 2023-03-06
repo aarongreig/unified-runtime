@@ -390,7 +390,10 @@ class ur_device_info_v(IntEnum):
                                                     ## The reference count returned should be considered immediately stale. 
                                                     ## It is unsuitable for general use in applications. This feature is
                                                     ## provided for identifying memory leaks.
-    IL_VERSION = 65                                 ## char[]: IL version
+    IL_VERSION = 65                                 ## char[] Null-terminated IL version string.
+                                                    ## Composed in the form `<IL>_<MAJOR>_<MINOR>`, where `<IL>` is a
+                                                    ## prefix uniquely identifying which intermediate language the device
+                                                    ## accepts.
     NAME = 66                                       ## char[]: Device name
     VENDOR = 67                                     ## char[]: Device vendor
     DRIVER_VERSION = 68                             ## char[]: Driver version

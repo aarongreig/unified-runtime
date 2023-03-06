@@ -211,7 +211,11 @@ etors:
             The reference count returned should be considered immediately stale. 
             It is unsuitable for general use in applications. This feature is provided for identifying memory leaks.
     - name: IL_VERSION
-      desc: "char[]: IL version"
+      desc: |
+            char[] Null-terminated IL version string.
+            Composed in the form `<IL>_<MAJOR>_<MINOR>`, where `<IL>` is a
+            prefix uniquely identifying which intermediate language the device
+            accepts.
     - name: NAME
       desc: "char[]: Device name"
     - name: VENDOR
