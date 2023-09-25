@@ -26,8 +26,10 @@ jobs:
     - name: Install doxygen
       run: |
         choco install doxygen.install
+        Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
         refreshenv
-        doxygen --version
+        Get-ChildItem -Path "C:\Program Files\doxygen"
+        doxygen.exe --version
 
     - name: Configure CMake
       run: >
