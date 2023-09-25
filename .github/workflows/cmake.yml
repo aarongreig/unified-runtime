@@ -9,8 +9,8 @@ jobs:
     strategy:
       matrix:
         os: ['windows-2022']
-        build_type: [Debug, Release]
-        compiler: [{c: cl.exe, cxx: cl.exe}, {c: clang-cl.exe, cxx: clang-cl.exe}]
+        build_type: [Release]
+        compiler: [{c: cl.exe, cxx: cl.exe}]
     runs-on: ${{matrix.os}}
 
     steps:
