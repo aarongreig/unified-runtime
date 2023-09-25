@@ -28,7 +28,7 @@ jobs:
         choco install doxygen.install
         Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
         refreshenv
-        Get-ChildItem -Path "C:\Program Files\doxygen"
+        Get-ChildItem -Path "C:\Program Files\doxygen\bin"
         doxygen.exe --version
 
     - name: Configure CMake
