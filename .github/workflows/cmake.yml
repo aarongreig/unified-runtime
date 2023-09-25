@@ -24,7 +24,10 @@ jobs:
       run: python3 -m pip install -r third_party/requirements.txt
 
     - name: Install doxygen
-      run: choco install doxygen.install
+      run: |
+        choco install doxygen.install
+        refreshenv
+        doxygen --version
 
     - name: Configure CMake
       run: >
