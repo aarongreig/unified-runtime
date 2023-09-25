@@ -7,6 +7,7 @@
 
 """
 import os
+import shutil
 import subprocess
 import util
 import re
@@ -243,7 +244,9 @@ def generate_common(dstpath, sections, ver, rev):
 
     # Doxygen generates XML files needed by sphinx breathe plugin for API documentation.
     print("Generating doxygen...")
-    proc = subprocess.Popen(["doxygen", "Doxyfile"], stderr=subprocess.PIPE)
+    doxygenpath = shutil.which("doxygen")
+    print("found doxygen: {0}".format(doxygenpath))
+    proc = subprocess.Popen([doxygenpath, "Doxyfile"], stderr=subprocess.PIPE)
     proc.wait()
     output = proc.stderr.read().decode()
     print(output)
