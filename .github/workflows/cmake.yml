@@ -29,7 +29,7 @@ jobs:
         Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
         refreshenv
         Get-ChildItem -Path "C:\Program Files\doxygen\bin"
-        C:\Program Files\doxygen\bin\doxygen.exe --version
+        & 'C:\Program Files\doxygen\bin\doxygen.exe' --version
 
     - name: Configure CMake
       run: >
