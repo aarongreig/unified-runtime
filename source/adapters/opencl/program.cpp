@@ -176,11 +176,15 @@ static cl_int mapURProgramInfoToCL(ur_program_info_t URPropName) {
 UR_APIEXPORT ur_result_t UR_APICALL
 urProgramGetInfo(ur_program_handle_t hProgram, ur_program_info_t propName,
                  size_t propSize, void *pPropValue, size_t *pPropSizeRet) {
-
-  CL_RETURN_ON_FAILURE(clGetProgramInfo(cl_adapter::cast<cl_program>(hProgram),
-                                        mapURProgramInfoToCL(propName),
-                                        propSize, pPropValue, pPropSizeRet));
-
+  size_t CheckPropSize = 0;
+  size_t *CheckPropSizeRet = pPropSizeRet ? pPropSizeRet : &CheckPropSize;
+  auto ClResult = clGetProgramInfo(cl_adapter::cast<cl_program>(hProgram),
+                                   mapURProgramInfoToCL(propName), propSize,
+                                   pPropValue, CheckPropSizeRet);
+  if (pPropValue && *CheckPropSizeRet != propSize) {
+    return UR_RESULT_ERROR_INVALID_SIZE;
+  }
+  CL_RETURN_ON_FAILURE(ClResult);
   return UR_RESULT_SUCCESS;
 }
 
@@ -299,9 +303,13 @@ UR_APIEXPORT ur_result_t UR_APICALL urProgramGetNativeHandle(
 
 UR_APIEXPORT ur_result_t UR_APICALL urProgramCreateWithNativeHandle(
     ur_native_handle_t hNativeProgram, ur_context_handle_t,
-    const ur_program_native_properties_t *, ur_program_handle_t *phProgram) {
-
+    const ur_program_native_properties_t *pProperties,
+    ur_program_handle_t *phProgram) {
   *phProgram = reinterpret_cast<ur_program_handle_t>(hNativeProgram);
+
+  if (!pProperties || !pProperties->isNativeHandleOwned) {
+    return urProgramRetain(*phProgram);
+  }
   return UR_RESULT_SUCCESS;
 }
 
@@ -400,7 +408,7 @@ UR_APIEXPORT ur_result_t UR_APICALL urProgramGetFunctionPointer(
   // function cannot be found, return an error code to indicate it exists.
   KernelNames.pop_back();
   if (!isInSeparatedString(KernelNames, ';', pFunctionName)) {
-    return UR_RESULT_ERROR_INVALID_KERNEL_NAME;
+    return UR_RESULT_ERROR_INVALID_FUNCTION_NAME;
   }
 
   const cl_int CLResult =

@@ -34,7 +34,6 @@ UR_APIEXPORT ur_result_t UR_APICALL urKernelSetArgValue(
 UR_APIEXPORT ur_result_t UR_APICALL
 urKernelSetArgLocal(ur_kernel_handle_t hKernel, uint32_t argIndex,
                     size_t argSize, const ur_kernel_arg_local_properties_t *) {
-
   CL_RETURN_ON_FAILURE(clSetKernelArg(cl_adapter::cast<cl_kernel>(hKernel),
                                       cl_adapter::cast<cl_uint>(argIndex),
                                       argSize, nullptr));
@@ -69,10 +68,30 @@ UR_APIEXPORT ur_result_t UR_APICALL urKernelGetInfo(ur_kernel_handle_t hKernel,
                                                     size_t propSize,
                                                     void *pPropValue,
                                                     size_t *pPropSizeRet) {
+  size_t CheckPropSize = 0;
+  size_t *CheckPropSizeRet = pPropSizeRet ? pPropSizeRet : &CheckPropSize;
 
-  CL_RETURN_ON_FAILURE(clGetKernelInfo(cl_adapter::cast<cl_kernel>(hKernel),
-                                       mapURKernelInfoToCL(propName), propSize,
-                                       pPropValue, pPropSizeRet));
+  if (propName == UR_KERNEL_INFO_NUM_ARGS) {
+    if (pPropSizeRet)
+      *pPropSizeRet = sizeof(size_t);
+    cl_uint NumArgs = 0;
+    CL_RETURN_ON_FAILURE(clGetKernelInfo(cl_adapter::cast<cl_kernel>(hKernel),
+                                         mapURKernelInfoToCL(propName),
+                                         sizeof(NumArgs), &NumArgs, nullptr));
+    if (pPropValue) {
+      if (propSize != sizeof(size_t))
+        return UR_RESULT_ERROR_INVALID_SIZE;
+      *static_cast<size_t *>(pPropValue) = static_cast<size_t>(NumArgs);
+    }
+  } else {
+    cl_int ClResult = clGetKernelInfo(cl_adapter::cast<cl_kernel>(hKernel),
+                                      mapURKernelInfoToCL(propName), propSize,
+                                      pPropValue, CheckPropSizeRet);
+    if (pPropValue && *CheckPropSizeRet != propSize) {
+      return UR_RESULT_ERROR_INVALID_SIZE;
+    }
+    CL_RETURN_ON_FAILURE(ClResult);
+  }
 
   return UR_RESULT_SUCCESS;
 }
@@ -199,7 +218,8 @@ urKernelGetSubGroupInfo(ur_kernel_handle_t hKernel, ur_device_handle_t hDevice,
     }
   }
 
-  *(static_cast<uint32_t *>(pPropValue)) = static_cast<uint32_t>(RetVal);
+  if (pPropValue)
+    *(static_cast<uint32_t *>(pPropValue)) = static_cast<uint32_t>(RetVal);
   if (pPropSizeRet)
     *pPropSizeRet = sizeof(uint32_t);
 
@@ -275,7 +295,6 @@ static ur_result_t usmSetIndirectAccess(ur_kernel_handle_t hKernel) {
 UR_APIEXPORT ur_result_t UR_APICALL urKernelSetExecInfo(
     ur_kernel_handle_t hKernel, ur_kernel_exec_info_t propName, size_t propSize,
     const ur_kernel_exec_info_properties_t *, const void *pPropValue) {
-
   switch (propName) {
   case UR_KERNEL_EXEC_INFO_USM_INDIRECT_ACCESS: {
     if (*(static_cast<const ur_bool_t *>(pPropValue)) == true) {
@@ -284,12 +303,14 @@ UR_APIEXPORT ur_result_t UR_APICALL urKernelSetExecInfo(
     return UR_RESULT_SUCCESS;
   }
   case UR_KERNEL_EXEC_INFO_CACHE_CONFIG: {
-    /* Setting the cache config is unsupported in OpenCL */
-    return UR_RESULT_ERROR_INVALID_ENUMERATION;
+    // Setting the cache config is unsupported in OpenCL, but this is just a
+    // hint.
+    return UR_RESULT_SUCCESS;
   }
   case UR_KERNEL_EXEC_INFO_USM_PTRS: {
     CL_RETURN_ON_FAILURE(clSetKernelExecInfo(
-        cl_adapter::cast<cl_kernel>(hKernel), propName, propSize, pPropValue));
+        cl_adapter::cast<cl_kernel>(hKernel),
+        CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL, propSize, pPropValue));
     return UR_RESULT_SUCCESS;
   }
   default: {
@@ -335,7 +356,11 @@ UR_APIEXPORT ur_result_t UR_APICALL urKernelGetNativeHandle(
 
 UR_APIEXPORT ur_result_t UR_APICALL urKernelCreateWithNativeHandle(
     ur_native_handle_t hNativeKernel, ur_context_handle_t, ur_program_handle_t,
-    const ur_kernel_native_properties_t *, ur_kernel_handle_t *phKernel) {
+    const ur_kernel_native_properties_t *pProperties,
+    ur_kernel_handle_t *phKernel) {
+  if (!pProperties || !pProperties->isNativeHandleOwned) {
+    return urKernelRetain(*phKernel);
+  }
 
   *phKernel = reinterpret_cast<ur_kernel_handle_t>(hNativeKernel);
   return UR_RESULT_SUCCESS;

@@ -1,12 +1,10 @@
 //===--------- context.cpp - OpenCL Adapter ---------------------------===//
 //
-// Copyright (C) 2023 Intel Corporation
-//
-// Part of the Unified-Runtime Project, under the Apache License v2.0 with LLVM
-// Exceptions. See LICENSE.TXT
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-//===----------------------------------------------------------------------===//
+//===-----------------------------------------------------------------===//
 
 #include "context.hpp"
 
@@ -89,10 +87,17 @@ urContextGetInfo(ur_context_handle_t hContext, ur_context_info_t propName,
   case UR_CONTEXT_INFO_NUM_DEVICES:
   case UR_CONTEXT_INFO_DEVICES:
   case UR_CONTEXT_INFO_REFERENCE_COUNT: {
-
-    CL_RETURN_ON_FAILURE(
+    // We always need to pass a return prop size pointer so we can return
+    // INVALID_SIZE when needed.
+    size_t CheckPropSize = 0;
+    size_t *CheckPropSizeRet = pPropSizeRet ? pPropSizeRet : &CheckPropSize;
+    auto ClResult =
         clGetContextInfo(cl_adapter::cast<cl_context>(hContext), CLPropName,
-                         propSize, pPropValue, pPropSizeRet));
+                         propSize, pPropValue, CheckPropSizeRet);
+    if (pPropValue && *CheckPropSizeRet != propSize) {
+      return UR_RESULT_ERROR_INVALID_SIZE;
+    }
+    CL_RETURN_ON_FAILURE(ClResult);
     return UR_RESULT_SUCCESS;
   }
   default:

@@ -1,12 +1,10 @@
 //===--------- enqueue.cpp - OpenCL Adapter --------------------------===//
 //
-// Copyright (C) 2023 Intel Corporation
-//
-// Part of the Unified-Runtime Project, under the Apache License v2.0 with LLVM
-// Exceptions. See LICENSE.TXT
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-//===----------------------------------------------------------------------===//
+//===-----------------------------------------------------------------===//
 
 #include "common.hpp"
 
@@ -23,6 +21,54 @@ cl_map_flags convertURMapFlagsToCL(ur_map_flags_t URFlags) {
   }
 
   return CLFlags;
+}
+
+ur_result_t ValidateBufferSize(ur_mem_handle_t Buffer, size_t Size,
+                               size_t Origin) {
+  size_t BufferSize = 0;
+  CL_RETURN_ON_FAILURE(clGetMemObjectInfo(cl_adapter::cast<cl_mem>(Buffer),
+                                          CL_MEM_SIZE, sizeof(BufferSize),
+                                          &BufferSize, nullptr));
+  if (Size + Origin > BufferSize)
+    return UR_RESULT_ERROR_INVALID_SIZE;
+  return UR_RESULT_SUCCESS;
+}
+
+ur_result_t ValidateBufferRectSize(ur_mem_handle_t Buffer,
+                                   ur_rect_region_t Region,
+                                   ur_rect_offset_t Offset) {
+
+  return UR_RESULT_SUCCESS;
+}
+
+ur_result_t ValidateImageSize(ur_mem_handle_t Image, ur_rect_region_t Region,
+                              ur_rect_offset_t Origin) {
+  // origin, region = {width, height, depth}
+  size_t Width = 0;
+  CL_RETURN_ON_FAILURE(clGetImageInfo(cl_adapter::cast<cl_mem>(Image),
+                                      CL_IMAGE_WIDTH, sizeof(Width), &Width,
+                                      nullptr));
+  if (Region.width + Origin.x > Width) {
+    return UR_RESULT_ERROR_INVALID_SIZE;
+  }
+
+  size_t Height = 0;
+  CL_RETURN_ON_FAILURE(clGetImageInfo(cl_adapter::cast<cl_mem>(Image),
+                                      CL_IMAGE_HEIGHT, sizeof(Height), &Height,
+                                      nullptr));
+  if (Region.height + Origin.y > Height) {
+    return UR_RESULT_ERROR_INVALID_SIZE;
+  }
+
+  size_t Depth = 0;
+  CL_RETURN_ON_FAILURE(clGetImageInfo(cl_adapter::cast<cl_mem>(Image),
+                                      CL_IMAGE_DEPTH, sizeof(Depth), &Depth,
+                                      nullptr));
+  if (Region.depth + Origin.z > Depth) {
+    return UR_RESULT_ERROR_INVALID_SIZE;
+  }
+
+  return UR_RESULT_SUCCESS;
 }
 
 UR_APIEXPORT ur_result_t UR_APICALL urEnqueueKernelLaunch(
@@ -70,12 +116,18 @@ UR_APIEXPORT ur_result_t UR_APICALL urEnqueueMemBufferRead(
     size_t offset, size_t size, void *pDst, uint32_t numEventsInWaitList,
     const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) {
 
-  CL_RETURN_ON_FAILURE(clEnqueueReadBuffer(
+  auto ClErr = clEnqueueReadBuffer(
       cl_adapter::cast<cl_command_queue>(hQueue),
       cl_adapter::cast<cl_mem>(hBuffer), blockingRead, offset, size, pDst,
       numEventsInWaitList, cl_adapter::cast<const cl_event *>(phEventWaitList),
-      cl_adapter::cast<cl_event *>(phEvent)));
+      cl_adapter::cast<cl_event *>(phEvent));
 
+  if (ClErr == CL_INVALID_VALUE) {
+    auto SizeValidResult = ValidateBufferSize(hBuffer, size, offset);
+    if (SizeValidResult != UR_RESULT_SUCCESS)
+      return SizeValidResult;
+  }
+  CL_RETURN_ON_FAILURE(ClErr);
   return UR_RESULT_SUCCESS;
 }
 
@@ -84,12 +136,18 @@ UR_APIEXPORT ur_result_t UR_APICALL urEnqueueMemBufferWrite(
     size_t offset, size_t size, const void *pSrc, uint32_t numEventsInWaitList,
     const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) {
 
-  CL_RETURN_ON_FAILURE(clEnqueueWriteBuffer(
+  auto ClErr = clEnqueueWriteBuffer(
       cl_adapter::cast<cl_command_queue>(hQueue),
       cl_adapter::cast<cl_mem>(hBuffer), blockingWrite, offset, size, pSrc,
       numEventsInWaitList, cl_adapter::cast<const cl_event *>(phEventWaitList),
-      cl_adapter::cast<cl_event *>(phEvent)));
+      cl_adapter::cast<cl_event *>(phEvent));
 
+  if (ClErr == CL_INVALID_VALUE) {
+    auto SizeValidResult = ValidateBufferSize(hBuffer, size, offset);
+    if (SizeValidResult != UR_RESULT_SUCCESS)
+      return SizeValidResult;
+  }
+  CL_RETURN_ON_FAILURE(ClErr);
   return UR_RESULT_SUCCESS;
 }
 
@@ -141,12 +199,23 @@ UR_APIEXPORT ur_result_t UR_APICALL urEnqueueMemBufferCopy(
     uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
     ur_event_handle_t *phEvent) {
 
-  CL_RETURN_ON_FAILURE(clEnqueueCopyBuffer(
+  auto ClErr = clEnqueueCopyBuffer(
       cl_adapter::cast<cl_command_queue>(hQueue),
       cl_adapter::cast<cl_mem>(hBufferSrc),
       cl_adapter::cast<cl_mem>(hBufferDst), srcOffset, dstOffset, size,
       numEventsInWaitList, cl_adapter::cast<const cl_event *>(phEventWaitList),
-      cl_adapter::cast<cl_event *>(phEvent)));
+      cl_adapter::cast<cl_event *>(phEvent));
+
+  if (ClErr == CL_INVALID_VALUE) {
+    auto SrcSizeValidResult = ValidateBufferSize(hBufferSrc, size, srcOffset);
+    if (SrcSizeValidResult != UR_RESULT_SUCCESS)
+      return SrcSizeValidResult;
+
+    auto DstSizeValidResult = ValidateBufferSize(hBufferDst, size, dstOffset);
+    if (DstSizeValidResult != UR_RESULT_SUCCESS)
+      return DstSizeValidResult;
+  }
+  CL_RETURN_ON_FAILURE(ClErr);
 
   return UR_RESULT_SUCCESS;
 }
@@ -179,11 +248,18 @@ UR_APIEXPORT ur_result_t UR_APICALL urEnqueueMemBufferFill(
     uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
     ur_event_handle_t *phEvent) {
 
-  CL_RETURN_ON_FAILURE(clEnqueueFillBuffer(
+  auto ClErr = clEnqueueFillBuffer(
       cl_adapter::cast<cl_command_queue>(hQueue),
       cl_adapter::cast<cl_mem>(hBuffer), pPattern, patternSize, offset, size,
       numEventsInWaitList, cl_adapter::cast<const cl_event *>(phEventWaitList),
-      cl_adapter::cast<cl_event *>(phEvent)));
+      cl_adapter::cast<cl_event *>(phEvent));
+
+  if (ClErr == CL_INVALID_VALUE) {
+    auto SizeValidResult = ValidateBufferSize(hBuffer, size, offset);
+    if (SizeValidResult != UR_RESULT_SUCCESS)
+      return SizeValidResult;
+  }
+  CL_RETURN_ON_FAILURE(ClErr);
 
   return UR_RESULT_SUCCESS;
 }
@@ -194,14 +270,20 @@ UR_APIEXPORT ur_result_t UR_APICALL urEnqueueMemImageRead(
     size_t slicePitch, void *pDst, uint32_t numEventsInWaitList,
     const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) {
 
-  CL_RETURN_ON_FAILURE(clEnqueueReadImage(
+  auto ClErr = clEnqueueReadImage(
       cl_adapter::cast<cl_command_queue>(hQueue),
       cl_adapter::cast<cl_mem>(hImage), blockingRead,
       cl_adapter::cast<const size_t *>(&origin),
       cl_adapter::cast<const size_t *>(&region), rowPitch, slicePitch, pDst,
       numEventsInWaitList, cl_adapter::cast<const cl_event *>(phEventWaitList),
-      cl_adapter::cast<cl_event *>(phEvent)));
+      cl_adapter::cast<cl_event *>(phEvent));
 
+  if (ClErr == CL_INVALID_VALUE) {
+    auto SizeValidResult = ValidateImageSize(hImage, region, origin);
+    if (SizeValidResult != UR_RESULT_SUCCESS)
+      return SizeValidResult;
+  }
+  CL_RETURN_ON_FAILURE(ClErr);
   return UR_RESULT_SUCCESS;
 }
 
@@ -211,14 +293,20 @@ UR_APIEXPORT ur_result_t UR_APICALL urEnqueueMemImageWrite(
     size_t slicePitch, void *pSrc, uint32_t numEventsInWaitList,
     const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) {
 
-  CL_RETURN_ON_FAILURE(clEnqueueWriteImage(
+  auto ClErr = clEnqueueWriteImage(
       cl_adapter::cast<cl_command_queue>(hQueue),
       cl_adapter::cast<cl_mem>(hImage), blockingWrite,
       cl_adapter::cast<const size_t *>(&origin),
       cl_adapter::cast<const size_t *>(&region), rowPitch, slicePitch, pSrc,
       numEventsInWaitList, cl_adapter::cast<const cl_event *>(phEventWaitList),
-      cl_adapter::cast<cl_event *>(phEvent)));
+      cl_adapter::cast<cl_event *>(phEvent));
 
+  if (ClErr == CL_INVALID_VALUE) {
+    auto SizeValidResult = ValidateImageSize(hImage, region, origin);
+    if (SizeValidResult != UR_RESULT_SUCCESS)
+      return SizeValidResult;
+  }
+  CL_RETURN_ON_FAILURE(ClErr);
   return UR_RESULT_SUCCESS;
 }
 
@@ -229,15 +317,25 @@ UR_APIEXPORT ur_result_t UR_APICALL urEnqueueMemImageCopy(
     uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
     ur_event_handle_t *phEvent) {
 
-  CL_RETURN_ON_FAILURE(clEnqueueCopyImage(
+  auto ClErr = clEnqueueCopyImage(
       cl_adapter::cast<cl_command_queue>(hQueue),
       cl_adapter::cast<cl_mem>(hImageSrc), cl_adapter::cast<cl_mem>(hImageDst),
       cl_adapter::cast<const size_t *>(&srcOrigin),
       cl_adapter::cast<const size_t *>(&dstOrigin),
       cl_adapter::cast<const size_t *>(&region), numEventsInWaitList,
       cl_adapter::cast<const cl_event *>(phEventWaitList),
-      cl_adapter::cast<cl_event *>(phEvent)));
+      cl_adapter::cast<cl_event *>(phEvent));
 
+  if (ClErr == CL_INVALID_VALUE) {
+    auto SrcSizeValidResult = ValidateImageSize(hImageSrc, region, srcOrigin);
+    if (SrcSizeValidResult != UR_RESULT_SUCCESS)
+      return SrcSizeValidResult;
+
+    auto DstSizeValidResult = ValidateImageSize(hImageDst, region, dstOrigin);
+    if (DstSizeValidResult != UR_RESULT_SUCCESS)
+      return DstSizeValidResult;
+  }
+  CL_RETURN_ON_FAILURE(ClErr);
   return UR_RESULT_SUCCESS;
 }
 
@@ -255,6 +353,11 @@ UR_APIEXPORT ur_result_t UR_APICALL urEnqueueMemBufferMap(
       cl_adapter::cast<const cl_event *>(phEventWaitList),
       cl_adapter::cast<cl_event *>(phEvent), &Err);
 
+  if (Err == CL_INVALID_VALUE) {
+    auto SizeValidResult = ValidateBufferSize(hBuffer, size, offset);
+    if (SizeValidResult != UR_RESULT_SUCCESS)
+      return SizeValidResult;
+  }
   CL_RETURN_ON_FAILURE(Err);
 
   return UR_RESULT_SUCCESS;
@@ -350,9 +453,9 @@ UR_APIEXPORT ur_result_t UR_APICALL urEnqueueReadHostPipe(
     return mapCLErrorToUR(CLErr);
   }
 
-  clEnqueueReadHostPipeINTEL_fn FuncPtr = nullptr;
+  cl_ext::clEnqueueReadHostPipeINTEL_fn FuncPtr = nullptr;
   ur_result_t RetVal =
-      cl_ext::getExtFuncFromContext<clEnqueueReadHostPipeINTEL_fn>(
+      cl_ext::getExtFuncFromContext<cl_ext::clEnqueueReadHostPipeINTEL_fn>(
           CLContext, cl_ext::ExtFuncPtrCache->clEnqueueReadHostPipeINTELCache,
           cl_ext::EnqueueReadHostPipeName, &FuncPtr);
 
@@ -382,9 +485,9 @@ UR_APIEXPORT ur_result_t UR_APICALL urEnqueueWriteHostPipe(
     return mapCLErrorToUR(CLErr);
   }
 
-  clEnqueueWriteHostPipeINTEL_fn FuncPtr = nullptr;
+  cl_ext::clEnqueueWriteHostPipeINTEL_fn FuncPtr = nullptr;
   ur_result_t RetVal =
-      cl_ext::getExtFuncFromContext<clEnqueueWriteHostPipeINTEL_fn>(
+      cl_ext::getExtFuncFromContext<cl_ext::clEnqueueWriteHostPipeINTEL_fn>(
           CLContext, cl_ext::ExtFuncPtrCache->clEnqueueWriteHostPipeINTELCache,
           cl_ext::EnqueueWriteHostPipeName, &FuncPtr);
 

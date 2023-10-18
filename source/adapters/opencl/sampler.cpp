@@ -1,12 +1,10 @@
 //===--------- sampler.cpp - OpenCL Adapter --------------------------===//
 //
-// Copyright (C) 2023 Intel Corporation
-//
-// Part of the Unified-Runtime Project, under the Apache License v2.0 with LLVM
-// Exceptions. See LICENSE.TXT
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-//===----------------------------------------------------------------------===//
+//===-----------------------------------------------------------------===//
 
 #include "common.hpp"
 
@@ -159,11 +157,16 @@ urSamplerGetInfo(ur_sampler_handle_t hSampler, ur_sampler_info_t propName,
   static_assert(sizeof(cl_addressing_mode) ==
                 sizeof(ur_sampler_addressing_mode_t));
 
-  if (ur_result_t Err = mapCLErrorToUR(
-          clGetSamplerInfo(cl_adapter::cast<cl_sampler>(hSampler), SamplerInfo,
-                           propSize, pPropValue, pPropSizeRet))) {
-    return Err;
+  size_t CheckPropSize = 0;
+  size_t *CheckPropSizeRet = pPropSizeRet ? pPropSizeRet : &CheckPropSize;
+  ur_result_t Err = mapCLErrorToUR(
+      clGetSamplerInfo(cl_adapter::cast<cl_sampler>(hSampler), SamplerInfo,
+                       propSize, pPropValue, CheckPropSizeRet));
+  if (pPropValue && *CheckPropSizeRet != propSize) {
+    return UR_RESULT_ERROR_INVALID_SIZE;
   }
+  CL_RETURN_ON_FAILURE(Err);
+
   // Convert OpenCL returns to UR
   cl2URSamplerInfoValue(SamplerInfo, pPropValue);
 

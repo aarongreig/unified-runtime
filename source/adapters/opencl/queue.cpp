@@ -19,7 +19,7 @@ cl_command_queue_info mapURQueueInfoToCL(const ur_queue_info_t PropName) {
   case UR_QUEUE_INFO_DEVICE_DEFAULT:
     return CL_QUEUE_DEVICE_DEFAULT;
   case UR_QUEUE_INFO_FLAGS:
-    return CL_QUEUE_PROPERTIES_ARRAY;
+    return CL_QUEUE_PROPERTIES;
   case UR_QUEUE_INFO_REFERENCE_COUNT:
     return CL_QUEUE_REFERENCE_COUNT;
   case UR_QUEUE_INFO_SIZE:
@@ -47,6 +47,23 @@ convertURQueuePropertiesToCL(const ur_queue_properties_t *URQueueProperties) {
   }
 
   return CLCommandQueueProperties;
+}
+
+ur_queue_flags_t mapCLQueuePropsToUR(cl_command_queue_properties Properties) {
+  ur_queue_flags_t Flags = 0;
+  if (Properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) {
+    Flags |= UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE;
+  }
+  if (Properties & CL_QUEUE_PROFILING_ENABLE) {
+    Flags |= UR_QUEUE_FLAG_PROFILING_ENABLE;
+  }
+  if (Properties & CL_QUEUE_ON_DEVICE) {
+    Flags |= UR_QUEUE_FLAG_ON_DEVICE;
+  }
+  if (Properties & CL_QUEUE_ON_DEVICE_DEFAULT) {
+    Flags |= UR_QUEUE_FLAG_ON_DEVICE_DEFAULT;
+  }
+  return Flags;
 }
 
 UR_APIEXPORT ur_result_t UR_APICALL urQueueCreate(
@@ -100,18 +117,40 @@ UR_APIEXPORT ur_result_t UR_APICALL urQueueGetInfo(ur_queue_handle_t hQueue,
                                                    size_t propSize,
                                                    void *pPropValue,
                                                    size_t *pPropSizeRet) {
-  if (propName == UR_QUEUE_INFO_EMPTY) {
+  switch (propName) {
+  case UR_QUEUE_INFO_EMPTY: {
     // OpenCL doesn't provide API to check the status of the queue.
-    return UR_RESULT_ERROR_INVALID_VALUE;
+    return UR_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
   }
-
-  cl_command_queue_info CLCommandQueueInfo = mapURQueueInfoToCL(propName);
-
-  cl_int RetErr = clGetCommandQueueInfo(
-      cl_adapter::cast<cl_command_queue>(hQueue), CLCommandQueueInfo, propSize,
-      pPropValue, pPropSizeRet);
-  CL_RETURN_ON_FAILURE(RetErr);
-  return UR_RESULT_SUCCESS;
+  case UR_QUEUE_INFO_FLAGS: {
+    cl_command_queue_info CLCommandQueueInfo = mapURQueueInfoToCL(propName);
+    UrReturnHelper ReturnValue(propSize, pPropValue, pPropSizeRet);
+    ur_queue_flags_t Flags = 0;
+    cl_command_queue_properties ClProperties = 0;
+    // this will not report errors correctly, e.g. invalid_value could actually
+    // mean invalid_size.. what a mess
+    CL_RETURN_ON_FAILURE(clGetCommandQueueInfo(
+        cl_adapter::cast<cl_command_queue>(hQueue), CLCommandQueueInfo,
+        sizeof(ClProperties), &ClProperties, nullptr));
+    if (pPropValue) {
+      Flags = mapCLQueuePropsToUR(ClProperties);
+    }
+    return ReturnValue(Flags);
+  }
+  default: {
+    cl_command_queue_info CLCommandQueueInfo = mapURQueueInfoToCL(propName);
+    size_t CheckPropSize = 0;
+    size_t *CheckPropSizeRet = pPropSizeRet ? pPropSizeRet : &CheckPropSize;
+    cl_int RetErr = clGetCommandQueueInfo(
+        cl_adapter::cast<cl_command_queue>(hQueue), CLCommandQueueInfo,
+        propSize, pPropValue, CheckPropSizeRet);
+    if (pPropValue && *CheckPropSizeRet != propSize) {
+      return UR_RESULT_ERROR_INVALID_SIZE;
+    }
+    CL_RETURN_ON_FAILURE(RetErr);
+    return UR_RESULT_SUCCESS;
+  }
+  }
 }
 
 UR_APIEXPORT ur_result_t UR_APICALL

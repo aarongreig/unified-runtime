@@ -1,0 +1,60 @@
+Validate Image/Buffer/BufferRect sizes in enqueue.cpp
+
+validate size in MemBufferPartition
+
+== VERIFIED ==
+
+GetInfo fixes for
+-urContextGetInfo
+-urDeviceGetInfo
+-urEventGetInfo
+-urKernelGetInfo
+-urMemGetInfo
+-urMemImageGetInfo
+-urProgramGetInfo
+-urProgramGetBuildInfo
+-urQueueGetInfo
+-urSamplerGetInfo
+-urUSMGetMemAllocInfo
+
+Device info fixes
+-Add DEVICE_INFO_DEVICE_ID implementation based on cl_khr_pci_bus_info extension
+-Add DEVICE_INFO_VIRTUAL_MEMORY_SUPPORT and DEVICE_INFO_HOST_PIPE_READ_WRITE_SUPPORTED
+-Add one new enum
+
+populate ddi table with Pipe entry point
+
+implement KernelSetExecInfo missing hints
+
+implement urKernelSetArgLocal
+
+EventGetInfo needed command type translated (new helper)
+
+add mapping from cl_program_binary_type to ur_program_binary_type_t
+
+fix urProgramGetFunctionPointer incorrect error code
+
+fix mapping of UR_QUEUE_INFO_FLAGS (should be CL_QUEUE_PROPERTIES)
+
+add full mapping of cl_command_queue_properties bitfield to ur_queue_flags_t
+
+== PR open ==
+
+Add more error code translations to mapCLError
+
+dereference fixes for
+-urKernelGetSubGroupInfo
+-urMemBufferCreate
+-urQueueCreate
+
+make USM alloca functions return UR_RESULT_ERROR_INVALID_USM_SIZE as they should
+
+be less aggressive about urEnqueueUSMPrefetch flags
+
+Retain fixes for
+-event
+-kernel
+-MemBuffer
+-program
+
+

@@ -1,12 +1,10 @@
 //===--------- memory.cpp - OpenCL Adapter ---------------------------===//
 //
-// Copyright (C) 2023 Intel Corporation
-//
-// Part of the Unified-Runtime Project, under the Apache License v2.0 with LLVM
-// Exceptions. See LICENSE.TXT
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-//===----------------------------------------------------------------------===//
+//===-----------------------------------------------------------------===//
 
 #include "common.hpp"
 
@@ -268,9 +266,10 @@ UR_APIEXPORT ur_result_t UR_APICALL urMemBufferCreate(
     }
   }
 
+  void *HostPtr = pProperties ? pProperties->pHost : nullptr;
   *phBuffer = reinterpret_cast<ur_mem_handle_t>(clCreateBuffer(
       cl_adapter::cast<cl_context>(hContext), static_cast<cl_mem_flags>(flags),
-      size, pProperties->pHost, cl_adapter::cast<cl_int *>(&RetErr)));
+      size, HostPtr, cl_adapter::cast<cl_int *>(&RetErr)));
   CL_RETURN_ON_FAILURE(RetErr);
 
   return UR_RESULT_SUCCESS;
@@ -311,6 +310,15 @@ UR_APIEXPORT ur_result_t UR_APICALL urMemBufferPartition(
     return UR_RESULT_ERROR_INVALID_ENUMERATION;
   }
 
+  size_t BufferSize = 0;
+  CL_RETURN_ON_FAILURE(clGetMemObjectInfo(cl_adapter::cast<cl_mem>(hBuffer),
+                                          CL_MEM_SIZE, sizeof(BufferSize),
+                                          &BufferSize, nullptr));
+
+  if (pRegion->size > BufferSize) {
+    return UR_RESULT_ERROR_INVALID_BUFFER_SIZE;
+  }
+
   _cl_buffer_region BufferRegion;
   BufferRegion.origin = pRegion->origin;
   BufferRegion.size = pRegion->size;
@@ -331,10 +339,11 @@ urMemGetNativeHandle(ur_mem_handle_t hMem, ur_native_handle_t *phNativeMem) {
 UR_APIEXPORT ur_result_t UR_APICALL urMemBufferCreateWithNativeHandle(
     ur_native_handle_t hNativeMem,
     [[maybe_unused]] ur_context_handle_t hContext,
-    [[maybe_unused]] const ur_mem_native_properties_t *pProperties,
-    ur_mem_handle_t *phMem) {
-
+    const ur_mem_native_properties_t *pProperties, ur_mem_handle_t *phMem) {
   *phMem = reinterpret_cast<ur_mem_handle_t>(hNativeMem);
+  if (!pProperties || !pProperties->isNativeHandleOwned) {
+    return urMemRetain(*phMem);
+  }
   return UR_RESULT_SUCCESS;
 }
 
@@ -359,9 +368,15 @@ UR_APIEXPORT ur_result_t UR_APICALL urMemGetInfo(ur_mem_handle_t hMemory,
   UrReturnHelper ReturnValue(propSize, pPropValue, pPropSizeRet);
   const cl_int CLPropName = mapURMemInfoToCL(propName);
 
-  CL_RETURN_ON_FAILURE(clGetMemObjectInfo(cl_adapter::cast<cl_mem>(hMemory),
-                                          CLPropName, propSize, pPropValue,
-                                          pPropSizeRet));
+  size_t CheckPropSize = 0;
+  size_t *CheckPropSizeRet = pPropSizeRet ? pPropSizeRet : &CheckPropSize;
+  auto ClResult =
+      clGetMemObjectInfo(cl_adapter::cast<cl_mem>(hMemory), CLPropName,
+                         propSize, pPropValue, CheckPropSizeRet);
+  if (pPropValue && *CheckPropSizeRet != propSize) {
+    return UR_RESULT_ERROR_INVALID_SIZE;
+  }
+  CL_RETURN_ON_FAILURE(ClResult);
   return UR_RESULT_SUCCESS;
 }
 
@@ -374,9 +389,14 @@ UR_APIEXPORT ur_result_t UR_APICALL urMemImageGetInfo(ur_mem_handle_t hMemory,
   UrReturnHelper ReturnValue(propSize, pPropValue, pPropSizeRet);
   const cl_int CLPropName = mapURMemImageInfoToCL(propName);
 
-  CL_RETURN_ON_FAILURE(clGetImageInfo(cl_adapter::cast<cl_mem>(hMemory),
-                                      CLPropName, propSize, pPropValue,
-                                      pPropSizeRet));
+  size_t CheckPropSize = 0;
+  size_t *CheckPropSizeRet = pPropSizeRet ? pPropSizeRet : &CheckPropSize;
+  auto ClResult = clGetImageInfo(cl_adapter::cast<cl_mem>(hMemory), CLPropName,
+                                 propSize, pPropValue, CheckPropSizeRet);
+  if (pPropValue && *CheckPropSizeRet != propSize) {
+    return UR_RESULT_ERROR_INVALID_SIZE;
+  }
+  CL_RETURN_ON_FAILURE(ClResult);
   return UR_RESULT_SUCCESS;
 }
 
