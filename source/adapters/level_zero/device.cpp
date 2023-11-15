@@ -823,6 +823,11 @@ UR_APIEXPORT ur_result_t UR_APICALL urDeviceGetInfo(
     return ReturnValue(result);
   }
 
+  case UR_DEVICE_INFO_COMMAND_BUFFER_SUPPORT_EXP:
+    return ReturnValue(true);
+  case UR_DEVICE_INFO_COMMAND_BUFFER_UPDATE_SUPPORT_EXP:
+    return ReturnValue(false);
+
   default:
     urPrint("Unsupported ParamName in urGetDeviceInfo\n");
     urPrint("ParamName=%d(0x%x)\n", ParamName, ParamName);

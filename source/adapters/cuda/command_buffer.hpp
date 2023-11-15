@@ -175,6 +175,70 @@ static inline const char *getUrResultString(ur_result_t Result) {
       fprintf(stderr, "UR <--- %s(%s)\n", #Call, getUrResultString(Result));   \
   }
 
+// Handle to a kernel command.
+//
+// Struct that stores all the information related to a kernel command in a
+// command-buffer, such that the command can be recreated. When handles can
+// be returned from other command types this struct will need refactored.
+struct ur_exp_command_buffer_command_handle_t_ {
+  ur_exp_command_buffer_command_handle_t_(
+      ur_exp_command_buffer_handle_t CommandBuffer, ur_kernel_handle_t Kernel,
+      std::shared_ptr<CUgraphNode> Node, CUDA_KERNEL_NODE_PARAMS Params,
+      uint32_t WorkDim, const size_t *pGlobalWorkOffset,
+      const size_t *pGlobalWorkSize, const size_t *pLocalWorkSize)
+      : CommandBuffer(CommandBuffer), Kernel(Kernel), Node(Node),
+        Params(Params), WorkDim(WorkDim) {
+    const size_t CopySize = sizeof(size_t) * WorkDim;
+    std::memcpy(GlobalWorkOffset, pGlobalWorkOffset, CopySize);
+    std::memcpy(GlobalWorkSize, pGlobalWorkSize, CopySize);
+    std::memcpy(LocalWorkSize, pLocalWorkSize, CopySize);
+
+    if (WorkDim < 3) {
+      const size_t ZeroSize = sizeof(size_t) * (3 - WorkDim);
+      std::memset(GlobalWorkOffset + WorkDim, 0, ZeroSize);
+      std::memset(GlobalWorkSize + WorkDim, 0, ZeroSize);
+      std::memset(LocalWorkSize + WorkDim, 0, ZeroSize);
+    }
+  }
+
+  void SetGlobalOffset(const size_t *pGlobalWorkOffset) {
+    const size_t CopySize = sizeof(size_t) * WorkDim;
+    std::memcpy(GlobalWorkOffset, pGlobalWorkOffset, CopySize);
+    if (WorkDim < 3) {
+      const size_t ZeroSize = sizeof(size_t) * (3 - WorkDim);
+      std::memset(GlobalWorkOffset + WorkDim, 0, ZeroSize);
+    }
+  }
+
+  void SetGlobalSize(const size_t *pGlobalWorkSize) {
+    const size_t CopySize = sizeof(size_t) * WorkDim;
+    std::memcpy(GlobalWorkSize, pGlobalWorkSize, CopySize);
+    if (WorkDim < 3) {
+      const size_t ZeroSize = sizeof(size_t) * (3 - WorkDim);
+      std::memset(GlobalWorkSize + WorkDim, 0, ZeroSize);
+    }
+  }
+
+  void SetLocalSize(const size_t *pLocalWorkSize) {
+    const size_t CopySize = sizeof(size_t) * WorkDim;
+    std::memcpy(LocalWorkSize, pLocalWorkSize, CopySize);
+    if (WorkDim < 3) {
+      const size_t ZeroSize = sizeof(size_t) * (3 - WorkDim);
+      std::memset(LocalWorkSize + WorkDim, 0, ZeroSize);
+    }
+  }
+
+  ur_exp_command_buffer_handle_t CommandBuffer;
+  ur_kernel_handle_t Kernel;
+  std::shared_ptr<CUgraphNode> Node;
+  CUDA_KERNEL_NODE_PARAMS Params;
+
+  uint32_t WorkDim;
+  size_t GlobalWorkOffset[3];
+  size_t GlobalWorkSize[3];
+  size_t LocalWorkSize[3];
+};
+
 struct ur_exp_command_buffer_handle_t_ {
 
   ur_exp_command_buffer_handle_t_(ur_context_handle_t hContext,
@@ -202,6 +266,27 @@ struct ur_exp_command_buffer_handle_t_ {
     return SyncPoint;
   }
 
+  // Creates a UR command handle
+  // @param[in] Kernel UR kernel associated with this command.
+  // @param[in] Node CUDA Graph node associated with this command.
+  // @param[in] Params CUDA Kernel configuration associated with this node.
+  // @param[in] WorkDim Dimensions of the kernel execution.
+  // @param[in] GlobalWorkOffset Work item offset of the kernel execution.
+  // @param[in] GlobalWorkSize Global work size of the kernel execution.
+  // @param[in] LocalWorkSize Local work size of the kernel execution.
+  // @return Shared pointer to the created handle.
+  std::shared_ptr<ur_exp_command_buffer_command_handle_t_>
+  AddCommandHandle(ur_kernel_handle_t Kernel, std::shared_ptr<CUgraphNode> Node,
+                   const CUDA_KERNEL_NODE_PARAMS &Params, uint32_t WorkDim,
+                   const size_t *GlobalWorkOffset, const size_t *GlobalWorkSize,
+                   const size_t *LocalWorkSize) {
+
+    Handles.push_back(std::make_shared<ur_exp_command_buffer_command_handle_t_>(
+        this, Kernel, Node, Params, WorkDim, GlobalWorkOffset, GlobalWorkSize,
+        LocalWorkSize));
+    return Handles.back();
+  }
+
   // UR context associated with this command-buffer
   ur_context_handle_t Context;
   // Device associated with this command buffer
@@ -221,6 +306,9 @@ struct ur_exp_command_buffer_handle_t_ {
   // Next sync_point value (may need to consider ways to reuse values if 32-bits
   // is not enough)
   ur_exp_command_buffer_sync_point_t NextSyncPoint;
+
+  // List of command handles returned to the user.
+  std::vector<std::shared_ptr<ur_exp_command_buffer_command_handle_t_>> Handles;
 
   // Used when retaining an object.
   uint32_t incrementReferenceCount() noexcept { return ++RefCount; }

@@ -104,7 +104,8 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendKernelLaunchExp(
     const size_t *pGlobalWorkSize, const size_t *pLocalWorkSize,
     uint32_t numSyncPointsInWaitList,
     const ur_exp_command_buffer_sync_point_t *pSyncPointWaitList,
-    ur_exp_command_buffer_sync_point_t *pSyncPoint) {
+    ur_exp_command_buffer_sync_point_t *pSyncPoint,
+    ur_exp_command_buffer_command_handle_t *) {
 
   cl_context CLContext = cl_adapter::cast<cl_context>(hCommandBuffer->hContext);
   cl_ext::clCommandNDRangeKernelKHR_fn clCommandNDRangeKernelKHR = nullptr;
@@ -355,4 +356,13 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
       cl_adapter::cast<cl_event *>(phEvent)));
 
   return UR_RESULT_SUCCESS;
+}
+
+UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferUpdateKernelLaunchExp(
+    [[maybe_unused]] ur_exp_command_buffer_command_handle_t hCommand,
+    [[maybe_unused]] const ur_exp_command_buffer_update_kernel_launch_desc_t
+        *pUpdateKernelLaunch) {
+  cl_adapter::die("Experimental Command-buffer feature is not "
+                  "implemented for OpenCL adapter.");
+  return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }

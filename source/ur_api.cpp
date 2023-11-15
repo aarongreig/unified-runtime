@@ -5949,7 +5949,7 @@ ur_result_t UR_APICALL urBindlessImagesSignalExternalSemaphoreExp(
 /// @brief Create a Command-Buffer object
 ///
 /// @details
-///     - Create a command-buffer object
+///     - Create a command-buffer object.
 ///
 /// @returns
 ///     - ::UR_RESULT_SUCCESS
@@ -5966,12 +5966,12 @@ ur_result_t UR_APICALL urBindlessImagesSignalExternalSemaphoreExp(
 ///     - ::UR_RESULT_ERROR_OUT_OF_HOST_MEMORY
 ///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
 ur_result_t UR_APICALL urCommandBufferCreateExp(
-    ur_context_handle_t hContext, ///< [in] handle of the context object
-    ur_device_handle_t hDevice,   ///< [in] handle of the device object
+    ur_context_handle_t hContext, ///< [in] Handle of the context object.
+    ur_device_handle_t hDevice,   ///< [in] Handle of the device object.
     const ur_exp_command_buffer_desc_t
-        *pCommandBufferDesc, ///< [in][optional] CommandBuffer descriptor
+        *pCommandBufferDesc, ///< [in][optional] command-buffer descriptor.
     ur_exp_command_buffer_handle_t
-        *phCommandBuffer ///< [out] pointer to Command-Buffer handle
+        *phCommandBuffer ///< [out] Pointer to command-Buffer handle.
 ) {
     ur_result_t result = UR_RESULT_SUCCESS;
     return result;
@@ -5992,7 +5992,7 @@ ur_result_t UR_APICALL urCommandBufferCreateExp(
 ///     - ::UR_RESULT_ERROR_OUT_OF_HOST_MEMORY
 ur_result_t UR_APICALL urCommandBufferRetainExp(
     ur_exp_command_buffer_handle_t
-        hCommandBuffer ///< [in] handle of the command-buffer object
+        hCommandBuffer ///< [in] Handle of the command-buffer object.
 ) {
     ur_result_t result = UR_RESULT_SUCCESS;
     return result;
@@ -6014,7 +6014,7 @@ ur_result_t UR_APICALL urCommandBufferRetainExp(
 ///     - ::UR_RESULT_ERROR_OUT_OF_HOST_MEMORY
 ur_result_t UR_APICALL urCommandBufferReleaseExp(
     ur_exp_command_buffer_handle_t
-        hCommandBuffer ///< [in] handle of the command-buffer object
+        hCommandBuffer ///< [in] Handle of the command-buffer object.
 ) {
     ur_result_t result = UR_RESULT_SUCCESS;
     return result;
@@ -6036,14 +6036,14 @@ ur_result_t UR_APICALL urCommandBufferReleaseExp(
 ///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
 ur_result_t UR_APICALL urCommandBufferFinalizeExp(
     ur_exp_command_buffer_handle_t
-        hCommandBuffer ///< [in] handle of the command-buffer object
+        hCommandBuffer ///< [in] Handle of the command-buffer object.
 ) {
     ur_result_t result = UR_RESULT_SUCCESS;
     return result;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Append a kernel execution command to a command-buffer object
+/// @brief Append a kernel execution command to a command-buffer object.
 ///
 /// @returns
 ///     - ::UR_RESULT_SUCCESS
@@ -6070,9 +6070,9 @@ ur_result_t UR_APICALL urCommandBufferFinalizeExp(
 ///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
 ur_result_t UR_APICALL urCommandBufferAppendKernelLaunchExp(
     ur_exp_command_buffer_handle_t
-        hCommandBuffer,         ///< [in] handle of the command-buffer object
-    ur_kernel_handle_t hKernel, ///< [in] kernel to append
-    uint32_t workDim,           ///< [in] dimension of the kernel execution
+        hCommandBuffer,         ///< [in] Handle of the command-buffer object.
+    ur_kernel_handle_t hKernel, ///< [in] Kernel to append.
+    uint32_t workDim,           ///< [in] Dimension of the kernel execution.
     const size_t
         *pGlobalWorkOffset, ///< [in] Offset to use when executing kernel.
     const size_t *
@@ -6083,15 +6083,17 @@ ur_result_t UR_APICALL urCommandBufferAppendKernelLaunchExp(
         numSyncPointsInWaitList, ///< [in] The number of sync points in the provided dependency list.
     const ur_exp_command_buffer_sync_point_t *
         pSyncPointWaitList, ///< [in][optional] A list of sync points that this command depends on.
-    ur_exp_command_buffer_sync_point_t
-        *pSyncPoint ///< [out][optional] sync point associated with this command
+    ur_exp_command_buffer_sync_point_t *
+        pSyncPoint, ///< [out][optional] Sync point associated with this command.
+    ur_exp_command_buffer_command_handle_t
+        *phCommand ///< [out][optional] Handle to this command.
 ) {
     ur_result_t result = UR_RESULT_SUCCESS;
     return result;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Append a USM memcpy command to a command-buffer object
+/// @brief Append a USM memcpy command to a command-buffer object.
 ///
 /// @returns
 ///     - ::UR_RESULT_SUCCESS
@@ -6116,23 +6118,23 @@ ur_result_t UR_APICALL urCommandBufferAppendKernelLaunchExp(
 ///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
 ur_result_t UR_APICALL urCommandBufferAppendUSMMemcpyExp(
     ur_exp_command_buffer_handle_t
-        hCommandBuffer, ///< [in] handle of the command-buffer object.
+        hCommandBuffer, ///< [in] Handle of the command-buffer object.
     void *pDst,         ///< [in] Location the data will be copied to.
     const void *pSrc,   ///< [in] The data to be copied.
-    size_t size,        ///< [in] The number of bytes to copy
+    size_t size,        ///< [in] The number of bytes to copy.
     uint32_t
         numSyncPointsInWaitList, ///< [in] The number of sync points in the provided dependency list.
     const ur_exp_command_buffer_sync_point_t *
         pSyncPointWaitList, ///< [in][optional] A list of sync points that this command depends on.
-    ur_exp_command_buffer_sync_point_t
-        *pSyncPoint ///< [out][optional] sync point associated with this command
+    ur_exp_command_buffer_sync_point_t *
+        pSyncPoint ///< [out][optional] Sync point associated with this command.
 ) {
     ur_result_t result = UR_RESULT_SUCCESS;
     return result;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Append a USM fill command to a command-buffer object
+/// @brief Append a USM fill command to a command-buffer object.
 ///
 /// @returns
 ///     - ::UR_RESULT_SUCCESS
@@ -6178,7 +6180,7 @@ ur_result_t UR_APICALL urCommandBufferAppendUSMFillExp(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Append a memory copy command to a command-buffer object
+/// @brief Append a memory copy command to a command-buffer object.
 ///
 /// @returns
 ///     - ::UR_RESULT_SUCCESS
@@ -6199,7 +6201,7 @@ ur_result_t UR_APICALL urCommandBufferAppendUSMFillExp(
 ///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
 ur_result_t UR_APICALL urCommandBufferAppendMemBufferCopyExp(
     ur_exp_command_buffer_handle_t
-        hCommandBuffer,      ///< [in] handle of the command-buffer object.
+        hCommandBuffer,      ///< [in] Handle of the command-buffer object.
     ur_mem_handle_t hSrcMem, ///< [in] The data to be copied.
     ur_mem_handle_t hDstMem, ///< [in] The location the data will be copied to.
     size_t srcOffset,        ///< [in] Offset into the source memory.
@@ -6209,15 +6211,15 @@ ur_result_t UR_APICALL urCommandBufferAppendMemBufferCopyExp(
         numSyncPointsInWaitList, ///< [in] The number of sync points in the provided dependency list.
     const ur_exp_command_buffer_sync_point_t *
         pSyncPointWaitList, ///< [in][optional] A list of sync points that this command depends on.
-    ur_exp_command_buffer_sync_point_t
-        *pSyncPoint ///< [out][optional] sync point associated with this command
+    ur_exp_command_buffer_sync_point_t *
+        pSyncPoint ///< [out][optional] Sync point associated with this command.
 ) {
     ur_result_t result = UR_RESULT_SUCCESS;
     return result;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Append a memory write command to a command-buffer object
+/// @brief Append a memory write command to a command-buffer object.
 ///
 /// @returns
 ///     - ::UR_RESULT_SUCCESS
@@ -6239,25 +6241,25 @@ ur_result_t UR_APICALL urCommandBufferAppendMemBufferCopyExp(
 ///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
 ur_result_t UR_APICALL urCommandBufferAppendMemBufferWriteExp(
     ur_exp_command_buffer_handle_t
-        hCommandBuffer,      ///< [in] handle of the command-buffer object.
-    ur_mem_handle_t hBuffer, ///< [in] handle of the buffer object.
-    size_t offset,           ///< [in] offset in bytes in the buffer object.
-    size_t size,             ///< [in] size in bytes of data being written.
+        hCommandBuffer,      ///< [in] Handle of the command-buffer object.
+    ur_mem_handle_t hBuffer, ///< [in] Handle of the buffer object.
+    size_t offset,           ///< [in] Offset in bytes in the buffer object.
+    size_t size,             ///< [in] Size in bytes of data being written.
     const void *
-        pSrc, ///< [in] pointer to host memory where data is to be written from.
+        pSrc, ///< [in] Pointer to host memory where data is to be written from.
     uint32_t
         numSyncPointsInWaitList, ///< [in] The number of sync points in the provided dependency list.
     const ur_exp_command_buffer_sync_point_t *
         pSyncPointWaitList, ///< [in][optional] A list of sync points that this command depends on.
-    ur_exp_command_buffer_sync_point_t
-        *pSyncPoint ///< [out][optional] sync point associated with this command
+    ur_exp_command_buffer_sync_point_t *
+        pSyncPoint ///< [out][optional] Sync point associated with this command.
 ) {
     ur_result_t result = UR_RESULT_SUCCESS;
     return result;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Append a memory read command to a command-buffer object
+/// @brief Append a memory read command to a command-buffer object.
 ///
 /// @returns
 ///     - ::UR_RESULT_SUCCESS
@@ -6279,24 +6281,24 @@ ur_result_t UR_APICALL urCommandBufferAppendMemBufferWriteExp(
 ///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
 ur_result_t UR_APICALL urCommandBufferAppendMemBufferReadExp(
     ur_exp_command_buffer_handle_t
-        hCommandBuffer,      ///< [in] handle of the command-buffer object.
-    ur_mem_handle_t hBuffer, ///< [in] handle of the buffer object.
-    size_t offset,           ///< [in] offset in bytes in the buffer object.
-    size_t size,             ///< [in] size in bytes of data being written.
-    void *pDst, ///< [in] pointer to host memory where data is to be written to.
+        hCommandBuffer,      ///< [in] Handle of the command-buffer object.
+    ur_mem_handle_t hBuffer, ///< [in] Handle of the buffer object.
+    size_t offset,           ///< [in] Offset in bytes in the buffer object.
+    size_t size,             ///< [in] Size in bytes of data being written.
+    void *pDst, ///< [in] Pointer to host memory where data is to be written to.
     uint32_t
         numSyncPointsInWaitList, ///< [in] The number of sync points in the provided dependency list.
     const ur_exp_command_buffer_sync_point_t *
         pSyncPointWaitList, ///< [in][optional] A list of sync points that this command depends on.
-    ur_exp_command_buffer_sync_point_t
-        *pSyncPoint ///< [out][optional] sync point associated with this command
+    ur_exp_command_buffer_sync_point_t *
+        pSyncPoint ///< [out][optional] Sync point associated with this command.
 ) {
     ur_result_t result = UR_RESULT_SUCCESS;
     return result;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Append a rectangular memory copy command to a command-buffer object
+/// @brief Append a rectangular memory copy command to a command-buffer object.
 ///
 /// @returns
 ///     - ::UR_RESULT_SUCCESS
@@ -6317,7 +6319,7 @@ ur_result_t UR_APICALL urCommandBufferAppendMemBufferReadExp(
 ///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
 ur_result_t UR_APICALL urCommandBufferAppendMemBufferCopyRectExp(
     ur_exp_command_buffer_handle_t
-        hCommandBuffer,      ///< [in] handle of the command-buffer object.
+        hCommandBuffer,      ///< [in] Handle of the command-buffer object.
     ur_mem_handle_t hSrcMem, ///< [in] The data to be copied.
     ur_mem_handle_t hDstMem, ///< [in] The location the data will be copied to.
     ur_rect_offset_t
@@ -6334,15 +6336,15 @@ ur_result_t UR_APICALL urCommandBufferAppendMemBufferCopyRectExp(
         numSyncPointsInWaitList, ///< [in] The number of sync points in the provided dependency list.
     const ur_exp_command_buffer_sync_point_t *
         pSyncPointWaitList, ///< [in][optional] A list of sync points that this command depends on.
-    ur_exp_command_buffer_sync_point_t
-        *pSyncPoint ///< [out][optional] sync point associated with this command
+    ur_exp_command_buffer_sync_point_t *
+        pSyncPoint ///< [out][optional] Sync point associated with this command.
 ) {
     ur_result_t result = UR_RESULT_SUCCESS;
     return result;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Append a rectangular memory write command to a command-buffer object
+/// @brief Append a rectangular memory write command to a command-buffer object.
 ///
 /// @returns
 ///     - ::UR_RESULT_SUCCESS
@@ -6364,38 +6366,38 @@ ur_result_t UR_APICALL urCommandBufferAppendMemBufferCopyRectExp(
 ///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
 ur_result_t UR_APICALL urCommandBufferAppendMemBufferWriteRectExp(
     ur_exp_command_buffer_handle_t
-        hCommandBuffer,      ///< [in] handle of the command-buffer object.
-    ur_mem_handle_t hBuffer, ///< [in] handle of the buffer object.
+        hCommandBuffer,      ///< [in] Handle of the command-buffer object.
+    ur_mem_handle_t hBuffer, ///< [in] Handle of the buffer object.
     ur_rect_offset_t bufferOffset, ///< [in] 3D offset in the buffer.
     ur_rect_offset_t hostOffset,   ///< [in] 3D offset in the host region.
     ur_rect_region_t
         region, ///< [in] 3D rectangular region descriptor: width, height, depth.
     size_t
-        bufferRowPitch, ///< [in] length of each row in bytes in the buffer object.
+        bufferRowPitch, ///< [in] Length of each row in bytes in the buffer object.
     size_t
-        bufferSlicePitch, ///< [in] length of each 2D slice in bytes in the buffer object being
+        bufferSlicePitch, ///< [in] Length of each 2D slice in bytes in the buffer object being
                           ///< written.
     size_t
-        hostRowPitch, ///< [in] length of each row in bytes in the host memory region pointed to
+        hostRowPitch, ///< [in] Length of each row in bytes in the host memory region pointed to
                       ///< by pSrc.
     size_t
-        hostSlicePitch, ///< [in] length of each 2D slice in bytes in the host memory region
+        hostSlicePitch, ///< [in] Length of each 2D slice in bytes in the host memory region
                         ///< pointed to by pSrc.
     void *
-        pSrc, ///< [in] pointer to host memory where data is to be written from.
+        pSrc, ///< [in] Pointer to host memory where data is to be written from.
     uint32_t
         numSyncPointsInWaitList, ///< [in] The number of sync points in the provided dependency list.
     const ur_exp_command_buffer_sync_point_t *
         pSyncPointWaitList, ///< [in][optional] A list of sync points that this command depends on.
-    ur_exp_command_buffer_sync_point_t
-        *pSyncPoint ///< [out][optional] sync point associated with this command
+    ur_exp_command_buffer_sync_point_t *
+        pSyncPoint ///< [out][optional] Sync point associated with this command.
 ) {
     ur_result_t result = UR_RESULT_SUCCESS;
     return result;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Append a rectangular memory read command to a command-buffer object
+/// @brief Append a rectangular memory read command to a command-buffer object.
 ///
 /// @returns
 ///     - ::UR_RESULT_SUCCESS
@@ -6417,36 +6419,36 @@ ur_result_t UR_APICALL urCommandBufferAppendMemBufferWriteRectExp(
 ///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
 ur_result_t UR_APICALL urCommandBufferAppendMemBufferReadRectExp(
     ur_exp_command_buffer_handle_t
-        hCommandBuffer,      ///< [in] handle of the command-buffer object.
-    ur_mem_handle_t hBuffer, ///< [in] handle of the buffer object.
+        hCommandBuffer,      ///< [in] Handle of the command-buffer object.
+    ur_mem_handle_t hBuffer, ///< [in] Handle of the buffer object.
     ur_rect_offset_t bufferOffset, ///< [in] 3D offset in the buffer.
     ur_rect_offset_t hostOffset,   ///< [in] 3D offset in the host region.
     ur_rect_region_t
         region, ///< [in] 3D rectangular region descriptor: width, height, depth.
     size_t
-        bufferRowPitch, ///< [in] length of each row in bytes in the buffer object.
+        bufferRowPitch, ///< [in] Length of each row in bytes in the buffer object.
     size_t
-        bufferSlicePitch, ///< [in] length of each 2D slice in bytes in the buffer object being read.
+        bufferSlicePitch, ///< [in] Length of each 2D slice in bytes in the buffer object being read.
     size_t
-        hostRowPitch, ///< [in] length of each row in bytes in the host memory region pointed to
+        hostRowPitch, ///< [in] Length of each row in bytes in the host memory region pointed to
                       ///< by pDst.
     size_t
-        hostSlicePitch, ///< [in] length of each 2D slice in bytes in the host memory region
+        hostSlicePitch, ///< [in] Length of each 2D slice in bytes in the host memory region
                         ///< pointed to by pDst.
-    void *pDst, ///< [in] pointer to host memory where data is to be read into.
+    void *pDst, ///< [in] Pointer to host memory where data is to be read into.
     uint32_t
         numSyncPointsInWaitList, ///< [in] The number of sync points in the provided dependency list.
     const ur_exp_command_buffer_sync_point_t *
         pSyncPointWaitList, ///< [in][optional] A list of sync points that this command depends on.
-    ur_exp_command_buffer_sync_point_t
-        *pSyncPoint ///< [out][optional] sync point associated with this command
+    ur_exp_command_buffer_sync_point_t *
+        pSyncPoint ///< [out][optional] Sync point associated with this command.
 ) {
     ur_result_t result = UR_RESULT_SUCCESS;
     return result;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Append a memory fill command to a command-buffer object
+/// @brief Append a memory fill command to a command-buffer object.
 ///
 /// @returns
 ///     - ::UR_RESULT_SUCCESS
@@ -6489,7 +6491,7 @@ ur_result_t UR_APICALL urCommandBufferAppendMemBufferFillExp(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Append a USM Prefetch command to a command-buffer object
+/// @brief Append a USM Prefetch command to a command-buffer object.
 ///
 /// @details
 ///     - Prefetching may not be supported for all devices or allocation types.
@@ -6536,7 +6538,7 @@ ur_result_t UR_APICALL urCommandBufferAppendUSMPrefetchExp(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Append a USM Advise command to a command-buffer object
+/// @brief Append a USM Advise command to a command-buffer object.
 ///
 /// @details
 ///     - Not all memory advice hints may be supported for all devices or
@@ -6604,18 +6606,53 @@ ur_result_t UR_APICALL urCommandBufferAppendUSMAdviseExp(
 ///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
 ur_result_t UR_APICALL urCommandBufferEnqueueExp(
     ur_exp_command_buffer_handle_t
-        hCommandBuffer, ///< [in] handle of the command-buffer object.
+        hCommandBuffer, ///< [in] Handle of the command-buffer object.
     ur_queue_handle_t
-        hQueue, ///< [in] the queue to submit this command-buffer for execution.
-    uint32_t numEventsInWaitList, ///< [in] size of the event wait list
+        hQueue, ///< [in] The queue to submit this command-buffer for execution.
+    uint32_t numEventsInWaitList, ///< [in] Size of the event wait list.
     const ur_event_handle_t *
         phEventWaitList, ///< [in][optional][range(0, numEventsInWaitList)] pointer to a list of
     ///< events that must be complete before the command-buffer execution.
-    ///< If nullptr, the numEventsInWaitList must be 0, indicating no wait
-    ///< events.
+    ///< If nullptr, the numEventsInWaitList must be 0, indicating no wait events.
     ur_event_handle_t *
         phEvent ///< [out][optional] return an event object that identifies this particular
                 ///< command-buffer execution instance.
+) {
+    ur_result_t result = UR_RESULT_SUCCESS;
+    return result;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Update a kernel launch command.
+///
+/// @returns
+///     - ::UR_RESULT_SUCCESS
+///     - ::UR_RESULT_ERROR_UNINITIALIZED
+///     - ::UR_RESULT_ERROR_DEVICE_LOST
+///     - ::UR_RESULT_ERROR_ADAPTER_SPECIFIC
+///     - ::UR_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `NULL == hCommand`
+///     - ::UR_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `NULL == pUpdateKernelLaunch`
+///     - ::UR_RESULT_ERROR_UNSUPPORTED_FEATURE
+///         + If update functionality is not supported by the device.
+///     - ::UR_RESULT_ERROR_INVALID_OPERATION
+///         + If ::ur_exp_command_buffer_desc_t::isUpdatable was not set to true on creation of the command buffer `hCommand` belongs to.
+///     - ::UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_COMMAND_HANDLE_EXP
+///     - ::UR_RESULT_ERROR_INVALID_MEM_OBJECT
+///     - ::UR_RESULT_ERROR_INVALID_KERNEL_ARGUMENT_INDEX
+///     - ::UR_RESULT_ERROR_INVALID_KERNEL_ARGUMENT_SIZE
+///     - ::UR_RESULT_ERROR_INVALID_ENUMERATION
+///     - ::UR_RESULT_ERROR_INVALID_WORK_DIMENSION
+///     - ::UR_RESULT_ERROR_INVALID_WORK_GROUP_SIZE
+///     - ::UR_RESULT_ERROR_INVALID_VALUE
+///     - ::UR_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
+ur_result_t UR_APICALL urCommandBufferUpdateKernelLaunchExp(
+    ur_exp_command_buffer_command_handle_t
+        hCommand, ///< [in] Handle of the command-buffer kernel command to update.
+    const ur_exp_command_buffer_update_kernel_launch_desc_t *
+        pUpdateKernelLaunch ///< [in] Struct defining how the kernel command is to be updated.
 ) {
     ur_result_t result = UR_RESULT_SUCCESS;
     return result;

@@ -1276,6 +1276,77 @@ struct urGlobalVariableTest : uur::urKernelExecutionTest {
     GlobalVar<int> global_var;
 };
 
+struct urExpCommandBufferTest : urKernelExecutionTest {
+    void SetUp() override {
+        UUR_RETURN_ON_FATAL_FAILURE(urKernelExecutionTest::SetUp());
+
+        size_t returned_size;
+        ASSERT_SUCCESS(urDeviceGetInfo(device, UR_DEVICE_INFO_EXTENSIONS, 0,
+                                       nullptr, &returned_size));
+
+        std::unique_ptr<char[]> returned_extensions(new char[returned_size]);
+
+        ASSERT_SUCCESS(urDeviceGetInfo(device, UR_DEVICE_INFO_EXTENSIONS,
+                                       returned_size, returned_extensions.get(),
+                                       nullptr));
+
+        std::string_view extensions_string(returned_extensions.get());
+        bool command_buffer_support =
+            extensions_string.find(UR_COMMAND_BUFFER_EXTENSION_STRING_EXP) !=
+            std::string::npos;
+
+        if (!command_buffer_support) {
+            GTEST_SKIP() << "EXP command-buffer feature is not supported.";
+        }
+
+        ASSERT_SUCCESS(urDeviceGetInfo(
+            device, UR_DEVICE_INFO_COMMAND_BUFFER_UPDATE_SUPPORT_EXP,
+            sizeof(ur_bool_t), &updatable_command_buffer_support, nullptr));
+
+        // Create a command-buffer
+        ASSERT_SUCCESS(urCommandBufferCreateExp(context, device, nullptr,
+                                                &cmd_buf_handle));
+        ASSERT_NE(cmd_buf_handle, nullptr);
+    }
+
+    void TearDown() override {
+        if (cmd_buf_handle) {
+            EXPECT_SUCCESS(urCommandBufferReleaseExp(cmd_buf_handle));
+        }
+        UUR_RETURN_ON_FATAL_FAILURE(urKernelExecutionTest::TearDown());
+    }
+
+    ur_exp_command_buffer_handle_t cmd_buf_handle = nullptr;
+    ur_bool_t updatable_command_buffer_support = false;
+};
+
+struct urExpUpdatableCommandBufferTests : urExpCommandBufferTest {
+    void SetUp() override {
+        UUR_RETURN_ON_FATAL_FAILURE(urExpCommandBufferTest ::SetUp());
+
+        if (!updatable_command_buffer_support) {
+            GTEST_SKIP() << "Updating EXP command-buffers is not supported.";
+        }
+
+        // Create a command-buffer with update enabled.
+        ur_exp_command_buffer_desc_t desc{
+            UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_DESC, nullptr, true};
+
+        ASSERT_SUCCESS(urCommandBufferCreateExp(context, device, &desc,
+                                                &updatable_cmd_buf_handle));
+        ASSERT_NE(updatable_cmd_buf_handle, nullptr);
+    }
+
+    void TearDown() override {
+        if (updatable_cmd_buf_handle) {
+            EXPECT_SUCCESS(urCommandBufferReleaseExp(updatable_cmd_buf_handle));
+        }
+        UUR_RETURN_ON_FATAL_FAILURE(urExpCommandBufferTest::TearDown());
+    }
+
+    ur_exp_command_buffer_handle_t updatable_cmd_buf_handle = nullptr;
+};
+
 } // namespace uur
 
 #endif // UR_CONFORMANCE_INCLUDE_FIXTURES_H_INCLUDED

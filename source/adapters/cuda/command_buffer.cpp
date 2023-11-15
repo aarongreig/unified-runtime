@@ -250,7 +250,8 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendKernelLaunchExp(
     const size_t *pGlobalWorkSize, const size_t *pLocalWorkSize,
     uint32_t numSyncPointsInWaitList,
     const ur_exp_command_buffer_sync_point_t *pSyncPointWaitList,
-    ur_exp_command_buffer_sync_point_t *pSyncPoint) {
+    ur_exp_command_buffer_sync_point_t *pSyncPoint,
+    ur_exp_command_buffer_command_handle_t *phCommand) {
   // Preconditions
   UR_ASSERT(hCommandBuffer->Context == hKernel->getContext(),
             UR_RESULT_ERROR_INVALID_KERNEL);
@@ -324,8 +325,16 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendKernelLaunchExp(
       hKernel->clearLocalSize();
 
     // Get sync point and register the cuNode with it.
-    *pSyncPoint =
-        hCommandBuffer->AddSyncPoint(std::make_shared<CUgraphNode>(GraphNode));
+    auto NodeSP = std::make_shared<CUgraphNode>(GraphNode);
+    if (pSyncPoint) {
+      *pSyncPoint = hCommandBuffer->AddSyncPoint(NodeSP);
+    }
+
+    *phCommand = hCommandBuffer
+                     ->AddCommandHandle(hKernel, NodeSP, NodeParams, workDim,
+                                        pGlobalWorkOffset, pGlobalWorkSize,
+                                        pLocalWorkSize)
+                     .get();
   } catch (ur_result_t Err) {
     Result = Err;
   }
@@ -761,4 +770,128 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
   }
 
   return Result;
+}
+
+UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferUpdateKernelLaunchExp(
+    ur_exp_command_buffer_command_handle_t hCommand,
+    const ur_exp_command_buffer_update_kernel_launch_desc_t *pKernelLaunch) {
+  // Kernel corresponding to the command to update
+  ur_kernel_handle_t Kernel = hCommand->Kernel;
+
+  // Update pointer arguments to the kernel
+  uint32_t NumPointerArgs = pKernelLaunch->numPointerArgs;
+  const ur_exp_command_buffer_update_pointer_arg_desc_t *ArgPointerList =
+      pKernelLaunch->pArgPointerList;
+  for (uint32_t i = 0; i < NumPointerArgs; i++) {
+    const auto &PointerArgDesc = ArgPointerList[i];
+    uint32_t ArgIndex = PointerArgDesc.argIndex;
+    const void *ArgValue = PointerArgDesc.pArgValue;
+
+    ur_result_t Result = UR_RESULT_SUCCESS;
+    try {
+      Kernel->setKernelArg(ArgIndex, sizeof(ArgValue), ArgValue);
+    } catch (ur_result_t Err) {
+      Result = Err;
+      return Result;
+    }
+  }
+
+  // Update memobj arguments to the kernel
+  uint32_t NumMemobjArgs = pKernelLaunch->numMemobjArgs;
+  const ur_exp_command_buffer_update_memobj_arg_desc_t *ArgMemobjList =
+      pKernelLaunch->pArgMemobjList;
+  for (uint32_t i = 0; i < NumMemobjArgs; i++) {
+    const auto &MemobjArgDesc = ArgMemobjList[i];
+    uint32_t ArgIndex = MemobjArgDesc.argIndex;
+    ur_mem_handle_t ArgValue = MemobjArgDesc.hArgValue;
+
+    ur_result_t Result = UR_RESULT_SUCCESS;
+    try {
+      if (ArgValue == nullptr) {
+        Kernel->setKernelArg(ArgIndex, 0, nullptr);
+      } else {
+        CUdeviceptr CuPtr = std::get<BufferMem>(ArgValue->Mem).get();
+        Kernel->setKernelArg(ArgIndex, sizeof(CUdeviceptr), (void *)&CuPtr);
+      }
+    } catch (ur_result_t Err) {
+      Result = Err;
+      return Result;
+    }
+  }
+
+  // Update value arguments to the kernel
+  uint32_t NumValueArgs = pKernelLaunch->numValueArgs;
+  const ur_exp_command_buffer_update_value_arg_desc_t *ArgValueList =
+      pKernelLaunch->pArgValueList;
+  for (uint32_t i = 0; i < NumValueArgs; i++) {
+    const auto &ValueArgDesc = ArgValueList[i];
+    uint32_t ArgIndex = ValueArgDesc.argIndex;
+    size_t ArgSize = ValueArgDesc.argSize;
+    const void *ArgValue = ValueArgDesc.pArgValue;
+
+    ur_result_t Result = UR_RESULT_SUCCESS;
+
+    try {
+      Kernel->setKernelArg(ArgIndex, ArgSize, ArgValue);
+    } catch (ur_result_t Err) {
+      Result = Err;
+      return Result;
+    }
+  }
+
+  // Set the updated ND range
+  const uint32_t NewWorkDim = pKernelLaunch->workDim;
+  if (NewWorkDim != 0) {
+    UR_ASSERT(NewWorkDim > 0, UR_RESULT_ERROR_INVALID_WORK_DIMENSION);
+    UR_ASSERT(NewWorkDim < 4, UR_RESULT_ERROR_INVALID_WORK_DIMENSION);
+    hCommand->WorkDim = NewWorkDim;
+  }
+
+  if (pKernelLaunch->pGlobalWorkOffset) {
+    hCommand->SetGlobalOffset(pKernelLaunch->pGlobalWorkOffset);
+  }
+
+  if (pKernelLaunch->pGlobalWorkSize) {
+    hCommand->SetGlobalSize(pKernelLaunch->pGlobalWorkSize);
+  }
+
+  if (pKernelLaunch->pLocalWorkSize) {
+    hCommand->SetLocalSize(pKernelLaunch->pLocalWorkSize);
+  }
+
+  size_t *GlobalWorkOffset = hCommand->GlobalWorkOffset;
+  size_t *GlobalWorkSize = hCommand->GlobalWorkSize;
+  size_t *LocalWorkSize = hCommand->LocalWorkSize;
+  uint32_t WorkDim = hCommand->WorkDim;
+
+  // Set the number of threads per block to the number of threads per warp
+  // by default unless user has provided a better number
+  size_t ThreadsPerBlock[3] = {32u, 1u, 1u};
+  size_t BlocksPerGrid[3] = {1u, 1u, 1u};
+  CUfunction CuFunc = Kernel->get();
+  ur_context_handle_t Context = hCommand->CommandBuffer->Context;
+  ur_device_handle_t Device = hCommand->CommandBuffer->Device;
+  auto Result = setKernelParams(Context, Device, WorkDim, GlobalWorkOffset,
+                                GlobalWorkSize, LocalWorkSize, Kernel, CuFunc,
+                                ThreadsPerBlock, BlocksPerGrid);
+  if (Result != UR_RESULT_SUCCESS) {
+    return Result;
+  }
+
+  CUDA_KERNEL_NODE_PARAMS &Params = hCommand->Params;
+
+  Params.func = CuFunc;
+  Params.gridDimX = BlocksPerGrid[0];
+  Params.gridDimY = BlocksPerGrid[1];
+  Params.gridDimZ = BlocksPerGrid[2];
+  Params.blockDimX = ThreadsPerBlock[0];
+  Params.blockDimY = ThreadsPerBlock[1];
+  Params.blockDimZ = ThreadsPerBlock[2];
+  Params.sharedMemBytes = Kernel->getLocalSize();
+  Params.kernelParams = const_cast<void **>(Kernel->getArgIndices().data());
+
+  CUgraphNode Node = *(hCommand->Node);
+  CUgraphExec CudaGraphExec = hCommand->CommandBuffer->CudaGraphExec;
+  UR_CHECK_ERROR(cuGraphExecKernelNodeSetParams(CudaGraphExec, Node, &Params));
+  return UR_RESULT_SUCCESS;
 }

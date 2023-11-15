@@ -502,6 +502,9 @@ etors:
 - name: ADAPTER_GET_INFO
   desc: Enumerator for $xAdapterGetInfo
   value: '181'
+- name: COMMAND_BUFFER_UPDATE_KERNEL_LAUNCH_EXP
+  desc: Enumerator for $xCommandBufferUpdateKernelLaunchExp
+  value: '182'
 - name: PROGRAM_BUILD_EXP
   desc: Enumerator for $xProgramBuildExp
   value: '197'

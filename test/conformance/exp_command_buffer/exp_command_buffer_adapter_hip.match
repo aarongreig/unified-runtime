@@ -1,0 +1,13 @@
+{{OPT}}BufferFillCommandTest.UpdateParameters/AMD_HIP_BACKEND{{.*}}
+{{OPT}}BufferFillCommandTest.UpdateGlobalSize/AMD_HIP_BACKEND{{.*}}
+{{OPT}}BufferFillCommandTest.SeparateUpdateCalls/AMD_HIP_BACKEND{{.*}}
+{{OPT}}BufferFillCommandTest.OverrideUpdate/AMD_HIP_BACKEND{{.*}}
+{{OPT}}BufferFillCommandTest.OverrideArgList/AMD_HIP_BACKEND{{.*}}
+{{OPT}}USMFillCommandTest.UpdateParameters/AMD_HIP_BACKEND{{.*}}
+{{OPT}}USMFillCommandTest.UpdateExecInfo/AMD_HIP_BACKEND{{.*}}
+{{OPT}}USMMultipleFillCommandTest.UpdateAllKernels/AMD_HIP_BACKEND{{.*}}
+{{OPT}}BufferSaxpyKernelTests.UpdateParameters/AMD_HIP_BACKEND{{.*}}
+{{OPT}}USMSaxpyKernelTests.UpdateParameters/AMD_HIP_BACKEND{{.*}}
+{{OPT}}NDRangeUpdateTests.Update3D/AMD_HIP_BACKEND{{.*}}
+{{OPT}}NDRangeUpdateTests.Update2D/AMD_HIP_BACKEND{{.*}}
+{{OPT}}NDRangeUpdateTests.Update1D/AMD_HIP_BACKEND{{.*}}

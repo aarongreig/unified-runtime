@@ -58,6 +58,8 @@ template <>
 struct is_handle<ur_exp_interop_semaphore_handle_t> : std::true_type {};
 template <>
 struct is_handle<ur_exp_command_buffer_handle_t> : std::true_type {};
+template <>
+struct is_handle<ur_exp_command_buffer_command_handle_t> : std::true_type {};
 template <typename T>
 inline constexpr bool is_handle_v = is_handle<T>::value;
 template <typename T>
@@ -319,6 +321,11 @@ inline std::ostream &operator<<(std::ostream &os, [[maybe_unused]] const struct 
 inline std::ostream &operator<<(std::ostream &os, [[maybe_unused]] const struct ur_exp_interop_mem_desc_t params);
 inline std::ostream &operator<<(std::ostream &os, [[maybe_unused]] const struct ur_exp_interop_semaphore_desc_t params);
 inline std::ostream &operator<<(std::ostream &os, [[maybe_unused]] const struct ur_exp_command_buffer_desc_t params);
+inline std::ostream &operator<<(std::ostream &os, [[maybe_unused]] const struct ur_exp_command_buffer_update_memobj_arg_desc_t params);
+inline std::ostream &operator<<(std::ostream &os, [[maybe_unused]] const struct ur_exp_command_buffer_update_pointer_arg_desc_t params);
+inline std::ostream &operator<<(std::ostream &os, [[maybe_unused]] const struct ur_exp_command_buffer_update_value_arg_desc_t params);
+inline std::ostream &operator<<(std::ostream &os, [[maybe_unused]] const struct ur_exp_command_buffer_update_exec_info_desc_t params);
+inline std::ostream &operator<<(std::ostream &os, [[maybe_unused]] const struct ur_exp_command_buffer_update_kernel_launch_desc_t params);
 inline std::ostream &operator<<(std::ostream &os, ur_exp_peer_info_t value);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -822,6 +829,9 @@ inline std::ostream &operator<<(std::ostream &os, ur_function_t value) {
     case UR_FUNCTION_ADAPTER_GET_INFO:
         os << "UR_FUNCTION_ADAPTER_GET_INFO";
         break;
+    case UR_FUNCTION_COMMAND_BUFFER_UPDATE_KERNEL_LAUNCH_EXP:
+        os << "UR_FUNCTION_COMMAND_BUFFER_UPDATE_KERNEL_LAUNCH_EXP";
+        break;
     case UR_FUNCTION_PROGRAM_BUILD_EXP:
         os << "UR_FUNCTION_PROGRAM_BUILD_EXP";
         break;
@@ -998,6 +1008,21 @@ inline std::ostream &operator<<(std::ostream &os, ur_structure_type_t value) {
         break;
     case UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_DESC:
         os << "UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_DESC";
+        break;
+    case UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_UPDATE_KERNEL_LAUNCH_DESC:
+        os << "UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_UPDATE_KERNEL_LAUNCH_DESC";
+        break;
+    case UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_UPDATE_MEMOBJ_ARG_DESC:
+        os << "UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_UPDATE_MEMOBJ_ARG_DESC";
+        break;
+    case UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_UPDATE_POINTER_ARG_DESC:
+        os << "UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_UPDATE_POINTER_ARG_DESC";
+        break;
+    case UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_UPDATE_VALUE_ARG_DESC:
+        os << "UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_UPDATE_VALUE_ARG_DESC";
+        break;
+    case UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_UPDATE_EXEC_INFO_DESC:
+        os << "UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_UPDATE_EXEC_INFO_DESC";
         break;
     case UR_STRUCTURE_TYPE_EXP_SAMPLER_MIP_PROPERTIES:
         os << "UR_STRUCTURE_TYPE_EXP_SAMPLER_MIP_PROPERTIES";
@@ -1211,6 +1236,31 @@ inline ur_result_t printStruct(std::ostream &os, const void *ptr) {
 
     case UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_DESC: {
         const ur_exp_command_buffer_desc_t *pstruct = (const ur_exp_command_buffer_desc_t *)ptr;
+        printPtr(os, pstruct);
+    } break;
+
+    case UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_UPDATE_KERNEL_LAUNCH_DESC: {
+        const ur_exp_command_buffer_update_kernel_launch_desc_t *pstruct = (const ur_exp_command_buffer_update_kernel_launch_desc_t *)ptr;
+        printPtr(os, pstruct);
+    } break;
+
+    case UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_UPDATE_MEMOBJ_ARG_DESC: {
+        const ur_exp_command_buffer_update_memobj_arg_desc_t *pstruct = (const ur_exp_command_buffer_update_memobj_arg_desc_t *)ptr;
+        printPtr(os, pstruct);
+    } break;
+
+    case UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_UPDATE_POINTER_ARG_DESC: {
+        const ur_exp_command_buffer_update_pointer_arg_desc_t *pstruct = (const ur_exp_command_buffer_update_pointer_arg_desc_t *)ptr;
+        printPtr(os, pstruct);
+    } break;
+
+    case UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_UPDATE_VALUE_ARG_DESC: {
+        const ur_exp_command_buffer_update_value_arg_desc_t *pstruct = (const ur_exp_command_buffer_update_value_arg_desc_t *)ptr;
+        printPtr(os, pstruct);
+    } break;
+
+    case UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_UPDATE_EXEC_INFO_DESC: {
+        const ur_exp_command_buffer_update_exec_info_desc_t *pstruct = (const ur_exp_command_buffer_update_exec_info_desc_t *)ptr;
         printPtr(os, pstruct);
     } break;
 
@@ -1471,6 +1521,9 @@ inline std::ostream &operator<<(std::ostream &os, ur_result_t value) {
         break;
     case UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_SYNC_POINT_WAIT_LIST_EXP:
         os << "UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_SYNC_POINT_WAIT_LIST_EXP";
+        break;
+    case UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_COMMAND_HANDLE_EXP:
+        os << "UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_COMMAND_HANDLE_EXP";
         break;
     case UR_RESULT_ERROR_UNKNOWN:
         os << "UR_RESULT_ERROR_UNKNOWN";
@@ -2400,6 +2453,12 @@ inline std::ostream &operator<<(std::ostream &os, ur_device_info_t value) {
         break;
     case UR_DEVICE_INFO_ESIMD_SUPPORT:
         os << "UR_DEVICE_INFO_ESIMD_SUPPORT";
+        break;
+    case UR_DEVICE_INFO_COMMAND_BUFFER_SUPPORT_EXP:
+        os << "UR_DEVICE_INFO_COMMAND_BUFFER_SUPPORT_EXP";
+        break;
+    case UR_DEVICE_INFO_COMMAND_BUFFER_UPDATE_SUPPORT_EXP:
+        os << "UR_DEVICE_INFO_COMMAND_BUFFER_UPDATE_SUPPORT_EXP";
         break;
     case UR_DEVICE_INFO_BINDLESS_IMAGES_SUPPORT_EXP:
         os << "UR_DEVICE_INFO_BINDLESS_IMAGES_SUPPORT_EXP";
@@ -3798,6 +3857,30 @@ inline ur_result_t printTagged(std::ostream &os, const void *ptr, ur_device_info
         os << ")";
     } break;
     case UR_DEVICE_INFO_ESIMD_SUPPORT: {
+        const ur_bool_t *tptr = (const ur_bool_t *)ptr;
+        if (sizeof(ur_bool_t) > size) {
+            os << "invalid size (is: " << size << ", expected: >=" << sizeof(ur_bool_t) << ")";
+            return UR_RESULT_ERROR_INVALID_SIZE;
+        }
+        os << (const void *)(tptr) << " (";
+
+        os << *tptr;
+
+        os << ")";
+    } break;
+    case UR_DEVICE_INFO_COMMAND_BUFFER_SUPPORT_EXP: {
+        const ur_bool_t *tptr = (const ur_bool_t *)ptr;
+        if (sizeof(ur_bool_t) > size) {
+            os << "invalid size (is: " << size << ", expected: >=" << sizeof(ur_bool_t) << ")";
+            return UR_RESULT_ERROR_INVALID_SIZE;
+        }
+        os << (const void *)(tptr) << " (";
+
+        os << *tptr;
+
+        os << ")";
+    } break;
+    case UR_DEVICE_INFO_COMMAND_BUFFER_UPDATE_SUPPORT_EXP: {
         const ur_bool_t *tptr = (const ur_bool_t *)ptr;
         if (sizeof(ur_bool_t) > size) {
             os << "invalid size (is: " << size << ", expected: >=" << sizeof(ur_bool_t) << ")";
@@ -9136,6 +9219,279 @@ inline std::ostream &operator<<(std::ostream &os, const struct ur_exp_command_bu
 
     ur::details::printStruct(os,
                              (params.pNext));
+
+    os << ", ";
+    os << ".isUpdatable = ";
+
+    os << (params.isUpdatable);
+
+    os << "}";
+    return os;
+}
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Print operator for the ur_exp_command_buffer_update_memobj_arg_desc_t type
+/// @returns
+///     std::ostream &
+inline std::ostream &operator<<(std::ostream &os, const struct ur_exp_command_buffer_update_memobj_arg_desc_t params) {
+    os << "(struct ur_exp_command_buffer_update_memobj_arg_desc_t){";
+
+    os << ".stype = ";
+
+    os << (params.stype);
+
+    os << ", ";
+    os << ".pNext = ";
+
+    ur::details::printStruct(os,
+                             (params.pNext));
+
+    os << ", ";
+    os << ".argIndex = ";
+
+    os << (params.argIndex);
+
+    os << ", ";
+    os << ".pProperties = ";
+
+    os << (params.pProperties);
+
+    os << ", ";
+    os << ".hArgValue = ";
+
+    ur::details::printPtr(os,
+                          (params.hArgValue));
+
+    os << "}";
+    return os;
+}
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Print operator for the ur_exp_command_buffer_update_pointer_arg_desc_t type
+/// @returns
+///     std::ostream &
+inline std::ostream &operator<<(std::ostream &os, const struct ur_exp_command_buffer_update_pointer_arg_desc_t params) {
+    os << "(struct ur_exp_command_buffer_update_pointer_arg_desc_t){";
+
+    os << ".stype = ";
+
+    os << (params.stype);
+
+    os << ", ";
+    os << ".pNext = ";
+
+    ur::details::printStruct(os,
+                             (params.pNext));
+
+    os << ", ";
+    os << ".argIndex = ";
+
+    os << (params.argIndex);
+
+    os << ", ";
+    os << ".pProperties = ";
+
+    os << (params.pProperties);
+
+    os << ", ";
+    os << ".pArgValue = ";
+
+    os << (params.pArgValue);
+
+    os << "}";
+    return os;
+}
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Print operator for the ur_exp_command_buffer_update_value_arg_desc_t type
+/// @returns
+///     std::ostream &
+inline std::ostream &operator<<(std::ostream &os, const struct ur_exp_command_buffer_update_value_arg_desc_t params) {
+    os << "(struct ur_exp_command_buffer_update_value_arg_desc_t){";
+
+    os << ".stype = ";
+
+    os << (params.stype);
+
+    os << ", ";
+    os << ".pNext = ";
+
+    ur::details::printStruct(os,
+                             (params.pNext));
+
+    os << ", ";
+    os << ".argIndex = ";
+
+    os << (params.argIndex);
+
+    os << ", ";
+    os << ".argSize = ";
+
+    os << (params.argSize);
+
+    os << ", ";
+    os << ".pProperties = ";
+
+    os << (params.pProperties);
+
+    os << ", ";
+    os << ".pArgValue = ";
+
+    os << (params.pArgValue);
+
+    os << "}";
+    return os;
+}
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Print operator for the ur_exp_command_buffer_update_exec_info_desc_t type
+/// @returns
+///     std::ostream &
+inline std::ostream &operator<<(std::ostream &os, const struct ur_exp_command_buffer_update_exec_info_desc_t params) {
+    os << "(struct ur_exp_command_buffer_update_exec_info_desc_t){";
+
+    os << ".stype = ";
+
+    os << (params.stype);
+
+    os << ", ";
+    os << ".pNext = ";
+
+    ur::details::printStruct(os,
+                             (params.pNext));
+
+    os << ", ";
+    os << ".propName = ";
+
+    os << (params.propName);
+
+    os << ", ";
+    os << ".propSize = ";
+
+    os << (params.propSize);
+
+    os << ", ";
+    os << ".pProperties = ";
+
+    os << (params.pProperties);
+
+    os << ", ";
+    os << ".pPropValue = ";
+
+    os << (params.pPropValue);
+
+    os << "}";
+    return os;
+}
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Print operator for the ur_exp_command_buffer_update_kernel_launch_desc_t type
+/// @returns
+///     std::ostream &
+inline std::ostream &operator<<(std::ostream &os, const struct ur_exp_command_buffer_update_kernel_launch_desc_t params) {
+    os << "(struct ur_exp_command_buffer_update_kernel_launch_desc_t){";
+
+    os << ".stype = ";
+
+    os << (params.stype);
+
+    os << ", ";
+    os << ".pNext = ";
+
+    ur::details::printStruct(os,
+                             (params.pNext));
+
+    os << ", ";
+    os << ".numMemobjArgs = ";
+
+    os << (params.numMemobjArgs);
+
+    os << ", ";
+    os << ".numPointerArgs = ";
+
+    os << (params.numPointerArgs);
+
+    os << ", ";
+    os << ".numValueArgs = ";
+
+    os << (params.numValueArgs);
+
+    os << ", ";
+    os << ".numExecInfos = ";
+
+    os << (params.numExecInfos);
+
+    os << ", ";
+    os << ".workDim = ";
+
+    os << (params.workDim);
+
+    os << ", ";
+    os << ".pArgMemobjList = {";
+    for (size_t i = 0; (params.pArgMemobjList) != NULL && i < params.numMemobjArgs; ++i) {
+        if (i != 0) {
+            os << ", ";
+        }
+
+        os << ((params.pArgMemobjList))[i];
+    }
+    os << "}";
+
+    os << ", ";
+    os << ".pArgPointerList = {";
+    for (size_t i = 0; (params.pArgPointerList) != NULL && i < params.numPointerArgs; ++i) {
+        if (i != 0) {
+            os << ", ";
+        }
+
+        os << ((params.pArgPointerList))[i];
+    }
+    os << "}";
+
+    os << ", ";
+    os << ".pArgValueList = {";
+    for (size_t i = 0; (params.pArgValueList) != NULL && i < params.numValueArgs; ++i) {
+        if (i != 0) {
+            os << ", ";
+        }
+
+        os << ((params.pArgValueList))[i];
+    }
+    os << "}";
+
+    os << ", ";
+    os << ".pArgExecInfoList = ";
+
+    ur::details::printPtr(os,
+                          (params.pArgExecInfoList));
+
+    os << ", ";
+    os << ".pGlobalWorkOffset = {";
+    for (size_t i = 0; (params.pGlobalWorkOffset) != NULL && i < params.workDim; ++i) {
+        if (i != 0) {
+            os << ", ";
+        }
+
+        os << ((params.pGlobalWorkOffset))[i];
+    }
+    os << "}";
+
+    os << ", ";
+    os << ".pGlobalWorkSize = {";
+    for (size_t i = 0; (params.pGlobalWorkSize) != NULL && i < params.workDim; ++i) {
+        if (i != 0) {
+            os << ", ";
+        }
+
+        os << ((params.pGlobalWorkSize))[i];
+    }
+    os << "}";
+
+    os << ", ";
+    os << ".pLocalWorkSize = {";
+    for (size_t i = 0; (params.pLocalWorkSize) != NULL && i < params.workDim; ++i) {
+        if (i != 0) {
+            os << ", ";
+        }
+
+        os << ((params.pLocalWorkSize))[i];
+    }
+    os << "}";
 
     os << "}";
     return os;
@@ -14534,6 +14890,12 @@ inline std::ostream &operator<<(std::ostream &os, [[maybe_unused]] const struct 
     ur::details::printPtr(os,
                           *(params->ppSyncPoint));
 
+    os << ", ";
+    os << ".phCommand = ";
+
+    ur::details::printPtr(os,
+                          *(params->pphCommand));
+
     return os;
 }
 
@@ -15229,6 +15591,26 @@ inline std::ostream &operator<<(std::ostream &os, [[maybe_unused]] const struct 
 
     ur::details::printPtr(os,
                           *(params->pphEvent));
+
+    return os;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Print operator for the ur_command_buffer_update_kernel_launch_exp_params_t type
+/// @returns
+///     std::ostream &
+inline std::ostream &operator<<(std::ostream &os, [[maybe_unused]] const struct ur_command_buffer_update_kernel_launch_exp_params_t *params) {
+
+    os << ".hCommand = ";
+
+    ur::details::printPtr(os,
+                          *(params->phCommand));
+
+    os << ", ";
+    os << ".pUpdateKernelLaunch = ";
+
+    ur::details::printPtr(os,
+                          *(params->ppUpdateKernelLaunch));
 
     return os;
 }
@@ -16366,6 +16748,9 @@ inline ur_result_t UR_APICALL printFunctionParams(std::ostream &os, ur_function_
     } break;
     case UR_FUNCTION_COMMAND_BUFFER_ENQUEUE_EXP: {
         os << (const struct ur_command_buffer_enqueue_exp_params_t *)params;
+    } break;
+    case UR_FUNCTION_COMMAND_BUFFER_UPDATE_KERNEL_LAUNCH_EXP: {
+        os << (const struct ur_command_buffer_update_kernel_launch_exp_params_t *)params;
     } break;
     case UR_FUNCTION_USM_P2P_ENABLE_PEER_ACCESS_EXP: {
         os << (const struct ur_usm_p2p_enable_peer_access_exp_params_t *)params;
