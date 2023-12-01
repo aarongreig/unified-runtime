@@ -884,6 +884,8 @@ UR_APIEXPORT ur_result_t UR_APICALL urDeviceGetInfo(ur_device_handle_t hDevice,
   case UR_DEVICE_INFO_KERNEL_SET_SPECIALIZATION_CONSTANTS:
     return ReturnValue(false);
 
+  case UR_DEVICE_INFO_GLOBAL_VARIABLE_SUPPORT:
+    return ReturnValue(false);
   // TODO: Investigate if this information is available on HIP.
   case UR_DEVICE_INFO_COMPONENT_DEVICES:
   case UR_DEVICE_INFO_COMPOSITE_DEVICE:
