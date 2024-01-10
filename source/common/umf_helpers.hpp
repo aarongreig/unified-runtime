@@ -8,6 +8,7 @@
  *
  */
 
+#include <atomic>
 #ifndef UMF_HELPERS_H
 #define UMF_HELPERS_H 1
 
@@ -23,6 +24,10 @@
 #include <stdexcept>
 #include <tuple>
 #include <utility>
+
+namespace usm {
+struct pool_descriptor;
+}
 
 namespace umf {
 
@@ -219,6 +224,124 @@ inline ur_result_t umf2urResult(umf_result_t umfResult) {
         return UR_RESULT_ERROR_UNKNOWN;
     };
 }
+
+// Exception type to pass allocation errors
+class UsmAllocationException {
+    const ur_result_t Error;
+
+  public:
+    UsmAllocationException(ur_result_t Err) : Error{Err} {}
+    ur_result_t getError() const { return Error; }
+};
+
+// Implements memory allocation via driver API for USM allocator interface.
+class USMMemoryProvider {
+  private:
+    ur_result_t &getLastStatusRef() {
+        static thread_local ur_result_t LastStatus = UR_RESULT_SUCCESS;
+        return LastStatus;
+    }
+
+  protected:
+    ur_context_handle_t Context;
+    ur_device_handle_t Device;
+    size_t MinPageSize = 0;
+
+    // Internal allocation routine which must be implemented for each allocation
+    // type
+    //
+
+    virtual ur_result_t allocateImpl(void **, size_t, uint32_t) {
+        return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    virtual ur_result_t freeImpl(void *, size_t) {
+        return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+  public:
+    virtual umf_result_t initialize(usm::pool_descriptor) = 0;
+
+    umf_result_t alloc(size_t Size, size_t Align, void **Ptr) {
+        auto Res = allocateImpl(Ptr, Size, Align);
+        if (Res != UR_RESULT_SUCCESS) {
+            getLastStatusRef() = Res;
+            return UMF_RESULT_ERROR_MEMORY_PROVIDER_SPECIFIC;
+        }
+
+        return UMF_RESULT_SUCCESS;
+    }
+    umf_result_t free(void *Ptr, size_t Size) {
+        auto Res = freeImpl(Ptr, Size);
+        if (Res != UR_RESULT_SUCCESS) {
+            getLastStatusRef() = Res;
+            return UMF_RESULT_ERROR_MEMORY_PROVIDER_SPECIFIC;
+        }
+        return UMF_RESULT_SUCCESS;
+    }
+    void get_last_native_error(const char **, int32_t *ErrCode) {
+        *ErrCode = static_cast<int32_t>(getLastStatusRef());
+    }
+    umf_result_t get_min_page_size(void *, size_t *PageSize) {
+        *PageSize = MinPageSize;
+        return UMF_RESULT_SUCCESS;
+    }
+
+    umf_result_t get_recommended_page_size(size_t, size_t *) {
+        return UMF_RESULT_ERROR_NOT_SUPPORTED;
+    };
+    umf_result_t purge_lazy(void *, size_t) {
+        return UMF_RESULT_ERROR_NOT_SUPPORTED;
+    };
+    umf_result_t purge_force(void *, size_t) {
+        return UMF_RESULT_ERROR_NOT_SUPPORTED;
+    };
+    virtual const char *get_name() = 0;
+
+    virtual ~USMMemoryProvider() = default;
+};
+
+// Allocation routines for shared memory type
+class USMSharedMemoryProvider : public USMMemoryProvider {
+  public:
+    umf_result_t initialize(usm::pool_descriptor Desc) override;
+    const char *get_name() override { return "USMSharedMemoryProvider"; }
+
+  protected:
+    ur_usm_host_desc_t hostDesc = {UR_STRUCTURE_TYPE_USM_HOST_DESC, nullptr, 0};
+    ur_usm_device_desc_t deviceDesc = {UR_STRUCTURE_TYPE_USM_DEVICE_DESC,
+                                       nullptr, 0};
+    ur_usm_alloc_location_desc_t allocLocation = {
+        UR_STRUCTURE_TYPE_USM_ALLOC_LOCATION_DESC, nullptr, 0};
+    ur_usm_desc_t usmDesc = {UR_STRUCTURE_TYPE_USM_DESC, nullptr, 0, 0};
+};
+
+// Allocation routines for device memory type
+class USMDeviceMemoryProvider : public USMMemoryProvider {
+  public:
+    umf_result_t initialize(usm::pool_descriptor Desc) override;
+    const char *get_name() override { return "USMDeviceMemoryProvider"; }
+
+  protected:
+    ur_usm_device_desc_t deviceDesc = {UR_STRUCTURE_TYPE_USM_DEVICE_DESC,
+                                       nullptr, 0};
+    ur_usm_alloc_location_desc_t allocLocation = {
+        UR_STRUCTURE_TYPE_USM_ALLOC_LOCATION_DESC, nullptr, 0};
+    ur_usm_desc_t usmDesc = {UR_STRUCTURE_TYPE_USM_DESC, nullptr, 0, 0};
+};
+
+// Allocation routines for host memory type
+class USMHostMemoryProvider : public USMMemoryProvider {
+  public:
+    umf_result_t initialize(usm::pool_descriptor Desc) override;
+    const char *get_name() override { return "USMHostMemoryProvider"; }
+
+  protected:
+    ur_usm_host_desc_t hostDesc = {UR_STRUCTURE_TYPE_USM_HOST_DESC, nullptr, 0};
+    ur_usm_alloc_location_desc_t allocLocation = {
+        UR_STRUCTURE_TYPE_USM_ALLOC_LOCATION_DESC, nullptr, 0};
+    ur_usm_desc_t usmDesc = {UR_STRUCTURE_TYPE_USM_DESC, nullptr, 0, 0};
+};
 
 } // namespace umf
 

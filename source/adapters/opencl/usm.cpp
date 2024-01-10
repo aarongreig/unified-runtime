@@ -8,7 +8,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "usm.hpp"
 #include "common.hpp"
+#include "umf_helpers.hpp"
+#include "ur_pool_manager.hpp"
 
 inline cl_mem_alloc_flags_intel
 hostDescToClFlags(const ur_usm_host_desc_t &desc) {
@@ -79,131 +82,172 @@ usmDescToCLMemProperties(const ur_base_desc_t *Desc,
   return UR_RESULT_SUCCESS;
 }
 
-UR_APIEXPORT ur_result_t UR_APICALL
-urUSMHostAlloc(ur_context_handle_t hContext, const ur_usm_desc_t *pUSMDesc,
-               ur_usm_pool_handle_t, size_t size, void **ppMem) {
+ur_result_t USMPoolAlloc(ur_context_handle_t hContext,
+                         ur_device_handle_t hDevice,
+                         const ur_usm_desc_t *pUSMDesc,
+                         ur_usm_pool_handle_t hPool, size_t size, void **ppMem,
+                         ur_usm_type_t type) {
+  auto Desc =
+      usm::pool_descriptor::create(hPool, hContext, hDevice, type, pUSMDesc);
+  auto hPoolInternalOpt = hPool->getOrCreatePool(Desc);
+  if (!hPoolInternalOpt.has_value()) {
+    return UR_RESULT_ERROR_UNKNOWN;
+  }
 
-  void *Ptr = nullptr;
-  uint32_t Alignment = pUSMDesc ? pUSMDesc->align : 0;
+  *ppMem = umfPoolAlignedMalloc(hPoolInternalOpt.value(), size,
+                                pUSMDesc ? pUSMDesc->align : 0);
+  if (!ppMem) {
+    auto umfErr = umfPoolGetLastAllocationError(hPoolInternalOpt.value());
+    return umf::umf2urResult(umfErr);
+  }
+
+  return UR_RESULT_SUCCESS;
+}
+
+ur_result_t USMHostAllocImpl(void **ResultPtr, ur_context_handle_t Context,
+                             ur_device_handle_t, const ur_usm_desc_t *USMDesc,
+                             size_t Size) {
+  uint32_t Alignment = USMDesc ? USMDesc->align : 0;
 
   std::vector<cl_mem_properties_intel> AllocProperties;
-  if (pUSMDesc && pUSMDesc->pNext) {
+  if (USMDesc && USMDesc->pNext) {
     UR_RETURN_ON_FAILURE(usmDescToCLMemProperties(
-        static_cast<const ur_base_desc_t *>(pUSMDesc->pNext), AllocProperties));
+        static_cast<const ur_base_desc_t *>(USMDesc->pNext), AllocProperties));
   }
 
   // First we need to look up the function pointer
   clHostMemAllocINTEL_fn FuncPtr = nullptr;
-  cl_context CLContext = cl_adapter::cast<cl_context>(hContext);
+  cl_context CLContext = cl_adapter::cast<cl_context>(Context);
   if (auto UrResult = cl_ext::getExtFuncFromContext<clHostMemAllocINTEL_fn>(
           CLContext, cl_ext::ExtFuncPtrCache->clHostMemAllocINTELCache,
           cl_ext::HostMemAllocName, &FuncPtr)) {
     return UrResult;
   }
 
-  if (FuncPtr) {
-    cl_int ClResult = CL_SUCCESS;
-    Ptr = FuncPtr(CLContext,
-                  AllocProperties.empty() ? nullptr : AllocProperties.data(),
-                  size, Alignment, &ClResult);
-    if (ClResult == CL_INVALID_BUFFER_SIZE) {
-      return UR_RESULT_ERROR_INVALID_USM_SIZE;
-    }
-    CL_RETURN_ON_FAILURE(ClResult);
+  cl_int ClResult = CL_SUCCESS;
+  auto Ptr = FuncPtr(CLContext,
+                     AllocProperties.empty() ? nullptr : AllocProperties.data(),
+                     Size, Alignment, &ClResult);
+  if (ClResult == CL_INVALID_BUFFER_SIZE) {
+    return UR_RESULT_ERROR_INVALID_USM_SIZE;
   }
-
-  *ppMem = Ptr;
+  CL_RETURN_ON_FAILURE(ClResult);
 
   assert((Alignment == 0 ||
-          reinterpret_cast<std::uintptr_t>(*ppMem) % Alignment == 0) &&
+          reinterpret_cast<std::uintptr_t>(Ptr) % Alignment == 0) &&
          "Allocation not aligned correctly!");
 
+  *ResultPtr = Ptr;
   return UR_RESULT_SUCCESS;
 }
 
 UR_APIEXPORT ur_result_t UR_APICALL
-urUSMDeviceAlloc(ur_context_handle_t hContext, ur_device_handle_t hDevice,
-                 const ur_usm_desc_t *pUSMDesc, ur_usm_pool_handle_t,
-                 size_t size, void **ppMem) {
+urUSMHostAlloc(ur_context_handle_t hContext, const ur_usm_desc_t *pUSMDesc,
+               ur_usm_pool_handle_t hPool, size_t size, void **ppMem) {
+  if (!hPool) {
+    return USMHostAllocImpl(ppMem, hContext, nullptr, pUSMDesc, size);
+  }
 
-  void *Ptr = nullptr;
-  uint32_t Alignment = pUSMDesc ? pUSMDesc->align : 0;
+  return USMPoolAlloc(hContext, nullptr, pUSMDesc, hPool, size, ppMem,
+                      UR_USM_TYPE_HOST);
+}
+
+ur_result_t USMDeviceAllocImpl(void **ResultPtr, ur_context_handle_t Context,
+                               ur_device_handle_t Device,
+                               const ur_usm_desc_t *USMDesc, size_t Size) {
+  uint32_t Alignment = USMDesc ? USMDesc->align : 0;
 
   std::vector<cl_mem_properties_intel> AllocProperties;
-  if (pUSMDesc && pUSMDesc->pNext) {
+  if (USMDesc && USMDesc->pNext) {
     UR_RETURN_ON_FAILURE(usmDescToCLMemProperties(
-        static_cast<const ur_base_desc_t *>(pUSMDesc->pNext), AllocProperties));
+        static_cast<const ur_base_desc_t *>(USMDesc->pNext), AllocProperties));
   }
 
   // First we need to look up the function pointer
   clDeviceMemAllocINTEL_fn FuncPtr = nullptr;
-  cl_context CLContext = cl_adapter::cast<cl_context>(hContext);
+  cl_context CLContext = cl_adapter::cast<cl_context>(Context);
   if (auto UrResult = cl_ext::getExtFuncFromContext<clDeviceMemAllocINTEL_fn>(
           CLContext, cl_ext::ExtFuncPtrCache->clDeviceMemAllocINTELCache,
           cl_ext::DeviceMemAllocName, &FuncPtr)) {
     return UrResult;
   }
 
-  if (FuncPtr) {
-    cl_int ClResult = CL_SUCCESS;
-    Ptr = FuncPtr(CLContext, cl_adapter::cast<cl_device_id>(hDevice),
-                  AllocProperties.empty() ? nullptr : AllocProperties.data(),
-                  size, Alignment, &ClResult);
-    if (ClResult == CL_INVALID_BUFFER_SIZE) {
-      return UR_RESULT_ERROR_INVALID_USM_SIZE;
-    }
-    CL_RETURN_ON_FAILURE(ClResult);
+  cl_int ClResult = CL_SUCCESS;
+  auto Ptr = FuncPtr(CLContext, cl_adapter::cast<cl_device_id>(Device),
+                     AllocProperties.empty() ? nullptr : AllocProperties.data(),
+                     Size, Alignment, &ClResult);
+  if (ClResult == CL_INVALID_BUFFER_SIZE) {
+    return UR_RESULT_ERROR_INVALID_USM_SIZE;
   }
-
-  *ppMem = Ptr;
+  CL_RETURN_ON_FAILURE(ClResult);
 
   assert((Alignment == 0 ||
-          reinterpret_cast<std::uintptr_t>(*ppMem) % Alignment == 0) &&
+          reinterpret_cast<std::uintptr_t>(Ptr) % Alignment == 0) &&
          "Allocation not aligned correctly!");
 
+  *ResultPtr = Ptr;
   return UR_RESULT_SUCCESS;
 }
 
 UR_APIEXPORT ur_result_t UR_APICALL
-urUSMSharedAlloc(ur_context_handle_t hContext, ur_device_handle_t hDevice,
-                 const ur_usm_desc_t *pUSMDesc, ur_usm_pool_handle_t,
+urUSMDeviceAlloc(ur_context_handle_t hContext, ur_device_handle_t hDevice,
+                 const ur_usm_desc_t *pUSMDesc, ur_usm_pool_handle_t hPool,
                  size_t size, void **ppMem) {
-
-  void *Ptr = nullptr;
-  uint32_t Alignment = pUSMDesc ? pUSMDesc->align : 0;
-
-  std::vector<cl_mem_properties_intel> AllocProperties;
-  if (pUSMDesc && pUSMDesc->pNext) {
-    UR_RETURN_ON_FAILURE(usmDescToCLMemProperties(
-        static_cast<const ur_base_desc_t *>(pUSMDesc->pNext), AllocProperties));
+  if (!hPool) {
+    return USMDeviceAllocImpl(ppMem, hContext, hDevice, pUSMDesc, size);
   }
 
-  // First we need to look up the function pointer
+  return USMPoolAlloc(hContext, hDevice, pUSMDesc, hPool, size, ppMem,
+                      UR_USM_TYPE_DEVICE);
+}
+
+ur_result_t USMSharedAllocImpl(void **ResultPtr, ur_context_handle_t Context,
+                               ur_device_handle_t Device,
+                               const ur_usm_desc_t *USMDesc, size_t Size) {
+  uint32_t Alignment = USMDesc ? USMDesc->align : 0;
+
+  std::vector<cl_mem_properties_intel> AllocProperties;
+  if (USMDesc && USMDesc->pNext) {
+    UR_RETURN_ON_FAILURE(usmDescToCLMemProperties(
+        static_cast<const ur_base_desc_t *>(USMDesc->pNext), AllocProperties));
+  }
+
+  // Look up the function pointer
   clSharedMemAllocINTEL_fn FuncPtr = nullptr;
-  cl_context CLContext = cl_adapter::cast<cl_context>(hContext);
+  cl_context CLContext = cl_adapter::cast<cl_context>(Context);
   if (auto UrResult = cl_ext::getExtFuncFromContext<clSharedMemAllocINTEL_fn>(
           CLContext, cl_ext::ExtFuncPtrCache->clSharedMemAllocINTELCache,
           cl_ext::SharedMemAllocName, &FuncPtr)) {
     return UrResult;
   }
 
-  if (FuncPtr) {
-    cl_int ClResult = CL_SUCCESS;
-    Ptr = FuncPtr(CLContext, cl_adapter::cast<cl_device_id>(hDevice),
-                  AllocProperties.empty() ? nullptr : AllocProperties.data(),
-                  size, Alignment, cl_adapter::cast<cl_int *>(&ClResult));
-    if (ClResult == CL_INVALID_BUFFER_SIZE) {
-      return UR_RESULT_ERROR_INVALID_USM_SIZE;
-    }
-    CL_RETURN_ON_FAILURE(ClResult);
+  cl_int ClResult = CL_SUCCESS;
+  auto Ptr = FuncPtr(CLContext, cl_adapter::cast<cl_device_id>(Device),
+                AllocProperties.empty() ? nullptr : AllocProperties.data(),
+                Size, Alignment, cl_adapter::cast<cl_int *>(&ClResult));
+  if (ClResult == CL_INVALID_BUFFER_SIZE) {
+    return UR_RESULT_ERROR_INVALID_USM_SIZE;
   }
-
-  *ppMem = Ptr;
+  CL_RETURN_ON_FAILURE(ClResult);
 
   assert((Alignment == 0 ||
-          reinterpret_cast<std::uintptr_t>(*ppMem) % Alignment == 0) &&
+          reinterpret_cast<std::uintptr_t>(Ptr) % Alignment == 0) &&
          "Allocation not aligned correctly!");
+
+  *ResultPtr = Ptr;
   return UR_RESULT_SUCCESS;
+}
+
+UR_APIEXPORT ur_result_t UR_APICALL
+urUSMSharedAlloc(ur_context_handle_t hContext, ur_device_handle_t hDevice,
+                 const ur_usm_desc_t *pUSMDesc, ur_usm_pool_handle_t hPool,
+                 size_t size, void **ppMem) {
+  if (!hPool) {
+    return USMSharedAllocImpl(ppMem, hContext, hDevice, pUSMDesc, size);
+  }
+
+  return USMPoolAlloc(hContext, hDevice, pUSMDesc, hPool, size, ppMem,
+                      UR_USM_TYPE_SHARED);
 }
 
 UR_APIEXPORT ur_result_t UR_APICALL urUSMFree(ur_context_handle_t hContext,
@@ -578,4 +622,133 @@ UR_APIEXPORT ur_result_t UR_APICALL
 urUSMReleaseExp([[maybe_unused]] ur_context_handle_t Context,
                 [[maybe_unused]] void *HostPtr) {
   return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ur_result_t ClUSMSharedMemoryProvider::allocateImpl(void **ResultPtr,
+                                                    size_t Size,
+                                                    uint32_t Alignment) {
+  usmDesc.align = Alignment;
+  return USMSharedAllocImpl(ResultPtr, Context, Device, &usmDesc, Size);
+}
+
+ur_result_t ClUSMDeviceMemoryProvider::allocateImpl(void **ResultPtr,
+                                                    size_t Size,
+                                                    uint32_t Alignment) {
+
+  usmDesc.align = Alignment;
+  return USMDeviceAllocImpl(ResultPtr, Context, Device, &usmDesc, Size);
+}
+
+ur_result_t ClUSMHostMemoryProvider::allocateImpl(void **ResultPtr, size_t Size,
+                                                  uint32_t Alignment) {
+  usmDesc.align = Alignment;
+  return USMHostAllocImpl(ResultPtr, Context, Device, &usmDesc, Size);
+}
+
+// Template helper function for creating USM pools for given pool descriptor.
+std::pair<ur_result_t, umf::pool_unique_handle_t>
+ur_usm_pool_handle_t_::createUMFPoolForDesc(usm::pool_descriptor &Desc,
+                                            usm::DisjointPoolConfig Config) {
+  umf_result_t UmfRet = UMF_RESULT_SUCCESS;
+  umf::provider_unique_handle_t MemProvider = nullptr;
+
+  switch (Desc.type) {
+  case UR_USM_TYPE_HOST: {
+    std::tie(UmfRet, MemProvider) =
+        umf::memoryProviderMakeUnique<ClUSMHostMemoryProvider>(Desc);
+    break;
+  }
+  case UR_USM_TYPE_DEVICE: {
+    std::tie(UmfRet, MemProvider) =
+        umf::memoryProviderMakeUnique<ClUSMDeviceMemoryProvider>(Desc);
+    break;
+  }
+  case UR_USM_TYPE_SHARED: {
+    std::tie(UmfRet, MemProvider) =
+        umf::memoryProviderMakeUnique<ClUSMSharedMemoryProvider>(Desc);
+    break;
+  }
+  default:
+    UmfRet = UMF_RESULT_ERROR_INVALID_ARGUMENT;
+  }
+
+  if (UmfRet)
+    return std::pair<ur_result_t, umf::pool_unique_handle_t>{
+        umf::umf2urResult(UmfRet), nullptr};
+
+  umf::pool_unique_handle_t Pool = nullptr;
+  std::tie(UmfRet, Pool) = umf::poolMakeUnique<usm::DisjointPool, 1>(
+      {std::move(MemProvider)}, Config);
+
+  return std::pair<ur_result_t, umf::pool_unique_handle_t>{
+      umf::umf2urResult(UmfRet), std::move(Pool)};
+};
+
+UR_APIEXPORT ur_result_t UR_APICALL urUSMPoolCreate(
+    ur_context_handle_t Context, ///< [in] handle of the context object
+    ur_usm_pool_desc_t
+        *PoolDesc, ///< [in] pointer to USM pool descriptor. Can be chained with
+                   ///< ::ur_usm_pool_limits_desc_t
+    ur_usm_pool_handle_t *Pool ///< [out] pointer to USM memory pool
+) {
+  // Without pool tracking we can't free pool allocations.
+#ifdef UMF_ENABLE_POOL_TRACKING
+  if (PoolDesc->flags & UR_USM_POOL_FLAG_ZERO_INITIALIZE_BLOCK) {
+    return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
+  }
+  try {
+    *Pool = reinterpret_cast<ur_usm_pool_handle_t>(
+        new ur_usm_pool_handle_t_(Context, PoolDesc));
+  } catch (const umf::UsmAllocationException &Ex) {
+    return Ex.getError();
+  }
+  return UR_RESULT_SUCCESS;
+#else
+  std::ignore = Context;
+  std::ignore = PoolDesc;
+  std::ignore = Pool;
+  return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
+#endif
+}
+
+UR_APIEXPORT ur_result_t UR_APICALL urUSMPoolRetain(
+    ur_usm_pool_handle_t Pool ///< [in] pointer to USM memory pool
+) {
+  Pool->incrementReferenceCount();
+  return UR_RESULT_SUCCESS;
+}
+
+UR_APIEXPORT ur_result_t UR_APICALL urUSMPoolRelease(
+    ur_usm_pool_handle_t Pool ///< [in] pointer to USM memory pool
+) {
+  if (Pool->decrementReferenceCount() > 0) {
+    return UR_RESULT_SUCCESS;
+  }
+  // Pool->Context->removePool(Pool);
+  delete Pool;
+  return UR_RESULT_SUCCESS;
+}
+
+UR_APIEXPORT ur_result_t UR_APICALL urUSMPoolGetInfo(
+    ur_usm_pool_handle_t hPool,  ///< [in] handle of the USM memory pool
+    ur_usm_pool_info_t propName, ///< [in] name of the pool property to query
+    size_t propSize, ///< [in] size in bytes of the pool property value provided
+    void *pPropValue, ///< [out][optional][typename(propName, propSize)] value
+                      ///< of the pool property
+    size_t *pPropSizeRet ///< [out][optional] size in bytes returned in pool
+                         ///< property value
+) {
+  UrReturnHelper ReturnValue(propSize, pPropValue, pPropSizeRet);
+
+  switch (propName) {
+  case UR_USM_POOL_INFO_REFERENCE_COUNT: {
+    return ReturnValue(hPool->getReferenceCount());
+  }
+  case UR_USM_POOL_INFO_CONTEXT: {
+    return ReturnValue(hPool->Context);
+  }
+  default: {
+    return UR_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
+  }
+  }
 }

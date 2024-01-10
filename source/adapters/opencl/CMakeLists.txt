@@ -36,6 +36,7 @@ add_ur_adapter(${TARGET_NAME} SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/program.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/queue.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sampler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/usm.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/usm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/usm_p2p.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/virtual_mem.cpp
@@ -88,6 +89,12 @@ target_compile_definitions(ur_adapter_opencl PRIVATE
     CL_TARGET_OPENCL_VERSION=300
     CL_USE_DEPRECATED_OPENCL_1_2_APIS
 )
+
+if(UMF_ENABLE_POOL_TRACKING)
+  target_compile_definitions(ur_adapter_opencl PRIVATE UMF_ENABLE_POOL_TRACKING)
+else()
+  message(WARNING "CUDA adapter USM pools are disabled, set UMF_ENABLE_POOL_TRACKING to enable them")
+endif()
 
 target_include_directories(${TARGET_NAME} PRIVATE
     ${OpenCLIncludeDirectory}

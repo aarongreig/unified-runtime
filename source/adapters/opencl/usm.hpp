@@ -7,10 +7,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
-
+#include "ur_pool_handle.hpp"
 #include <umf_helpers.hpp>
 #include <umf_pools/disjoint_pool_config_parser.hpp>
-#include <ur_pool_handle.hpp>
 #include <ur_pool_manager.hpp>
 
 struct ur_usm_pool_handle_t_ final : public usm::pool_handle_base {
@@ -23,22 +22,19 @@ struct ur_usm_pool_handle_t_ final : public usm::pool_handle_base {
                        usm::DisjointPoolConfig) override;
 };
 
-class CudaUSMSharedMemoryProvider : public umf::USMSharedMemoryProvider {
+class ClUSMSharedMemoryProvider : public umf::USMSharedMemoryProvider {
   ur_result_t allocateImpl(void **ResultPtr, size_t Size,
                            uint32_t Alignment) override;
-  ur_result_t freeImpl(void *Ptr, size_t) override;
 };
 
-class CudaUSMHostMemoryProvider : public umf::USMHostMemoryProvider {
+class ClUSMHostMemoryProvider : public umf::USMHostMemoryProvider {
   ur_result_t allocateImpl(void **ResultPtr, size_t Size,
                            uint32_t Alignment) override;
-  ur_result_t freeImpl(void *Ptr, size_t) override;
 };
 
-class CudaUSMDeviceMemoryProvider : public umf::USMDeviceMemoryProvider {
+class ClUSMDeviceMemoryProvider : public umf::USMDeviceMemoryProvider {
   ur_result_t allocateImpl(void **ResultPtr, size_t Size,
                            uint32_t Alignment) override;
-  ur_result_t freeImpl(void *Ptr, size_t) override;
 };
 
 ur_result_t USMDeviceAllocImpl(void **ResultPtr, ur_context_handle_t Context,
@@ -48,9 +44,7 @@ ur_result_t USMDeviceAllocImpl(void **ResultPtr, ur_context_handle_t Context,
 
 ur_result_t USMSharedAllocImpl(void **ResultPtr, ur_context_handle_t Context,
                                ur_device_handle_t Device,
-                               ur_usm_host_mem_flags_t *,
-                               ur_usm_device_mem_flags_t *, size_t Size,
-                               uint32_t Alignment);
+                               const ur_usm_desc_t *USMDesc, size_t Size);
 
 ur_result_t USMHostAllocImpl(void **ResultPtr, ur_context_handle_t Context,
                              ur_usm_host_mem_flags_t *Flags, size_t Size,
