@@ -320,6 +320,15 @@ Functions
 * ${x}CommandBufferGetInfoExp
 * ${x}CommandBufferCommandGetInfoExp
 
+Implementations
+--------------------------------------------------------------------------------
+For detail about the existing implementations of this experimental feature set
+see:
+
+.. toctree::
+
+    command-buffer-design.rst
+
 Changelog
 --------------------------------------------------------------------------------
 
