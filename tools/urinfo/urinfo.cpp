@@ -3,187 +3,284 @@
 // See LICENSE.TXT
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "urinfo.hpp"
+#include "utils.hpp"
 #include <cstdlib>
-#include <iostream>
-#include <string>
-#include <string_view>
-#include <unordered_map>
 #include <vector>
 
-namespace urinfo {
-struct app {
-    bool verbose = false;
-    ur_loader_config_handle_t loaderConfig = nullptr;
-    std::vector<ur_adapter_handle_t> adapters;
-    std::unordered_map<ur_adapter_handle_t, std::vector<ur_platform_handle_t>>
-        adapterPlatformsMap;
-    std::unordered_map<ur_platform_handle_t, std::vector<ur_device_handle_t>>
-        platformDevicesMap;
+int main(int, char **) {
+    UR_CHECK(urInit(0, nullptr));
 
-    app(int argc, const char **argv) {
-        parseArgs(argc, argv);
-        UR_CHECK(urLoaderConfigCreate(&loaderConfig));
-        UR_CHECK(urLoaderConfigEnableLayer(loaderConfig,
-                                           "UR_LAYER_FULL_VALIDATION"));
-        UR_CHECK(urInit(0, loaderConfig));
-        enumerateDevices();
-    }
+    uint32_t adapterCount = 0;
 
-    void parseArgs(int argc, const char **argv) {
-        static const char *usage = R"(usage: %s [-h] [-v] [-V]
+    UR_CHECK(urAdapterGet(0, nullptr, &adapterCount));
+    std::vector<ur_adapter_handle_t> adapters(adapterCount);
+    UR_CHECK(urAdapterGet(adapterCount, adapters.data(), nullptr));
 
-This tool enumerates Unified Runtime layers, adapters, platforms, and
-devices which are currently visible in the local execution environment.
+    uint32_t platformCount = 0;
+    UR_CHECK(urPlatformGet(adapters.data(), adapterCount, 0, nullptr,
+                           &platformCount));
 
-options:
-  -h, --help            show this help message and exit
-  --version             show version number and exit
-  -v, --verbose         print additional information
-)";
-        for (int argi = 1; argi < argc; argi++) {
-            std::string_view arg{argv[argi]};
-            if (arg == "-h" || arg == "--help") {
-                std::printf(usage, argv[0]);
-                std::exit(0);
-            } else if (arg == "--version") {
-                std::printf("%s v%s\n", argv[0], UR_VERSION);
-                std::exit(0);
-            } else if (arg == "-v" || arg == "--verbose") {
-                verbose = true;
-            } else {
-                std::fprintf(stderr, "error: invalid argument: %s\n",
-                             argv[argi]);
-                std::fprintf(stderr, usage, argv[0]);
-                std::exit(1);
-            }
-        }
-    }
+    std::vector<ur_platform_handle_t> platforms(platformCount);
+    UR_CHECK(urPlatformGet(adapters.data(), adapterCount, platformCount,
+                           platforms.data(), nullptr));
 
-    void enumerateDevices() {
-        // Enumerate adapters.
-        uint32_t numAdapters = 0;
-        UR_CHECK(urAdapterGet(0, nullptr, &numAdapters));
-        if (numAdapters == 0) {
-            std::cout << "No adapters found.\n";
-            std::exit(0);
-        }
-        adapters.resize(numAdapters);
-        UR_CHECK(urAdapterGet(numAdapters, adapters.data(), nullptr));
+    auto platform_1 = platforms[0];
 
-        for (size_t adapterIndex = 0; adapterIndex < adapters.size();
-             adapterIndex++) {
-            auto adapter = adapters[adapterIndex];
-            // Enumerate platforms
-            uint32_t numPlatforms = 0;
-            UR_CHECK(urPlatformGet(&adapter, 1, 0, nullptr, &numPlatforms));
-            if (numPlatforms == 0) {
-                std::cout << "No platforms found in adapter " << adapterIndex
-                          << ".\n";
-                continue;
-            }
-            adapterPlatformsMap[adapter].resize(numPlatforms);
-            UR_CHECK(urPlatformGet(&adapter, 1, numPlatforms,
-                                   adapterPlatformsMap[adapter].data(),
-                                   nullptr));
+    ur_platform_backend_t platform_backend;
+    UR_CHECK(urPlatformGetInfo(platform_1, UR_PLATFORM_INFO_BACKEND,
+                               sizeof(platform_backend), &platform_backend,
+                               nullptr));
 
-            for (size_t platformIndex = 0; platformIndex < numPlatforms;
-                 platformIndex++) {
-                auto platform = adapterPlatformsMap[adapter][platformIndex];
-                // Enumerate devices
-                uint32_t numDevices = 0;
-                UR_CHECK(urDeviceGet(platform, UR_DEVICE_TYPE_ALL, 0, nullptr,
-                                     &numDevices));
-                if (numDevices == 0) {
-                    std::cout << "No devices found platform " << platformIndex
-                              << ".\n";
-                    continue;
-                }
-                platformDevicesMap[platform].resize(numDevices);
-                UR_CHECK(urDeviceGet(platform, UR_DEVICE_TYPE_ALL, numDevices,
-                                     platformDevicesMap[platform].data(),
-                                     nullptr));
-            }
-        }
-    }
+    size_t nameSize1 = 0;
+    UR_CHECK(urPlatformGetInfo(platform_1, UR_PLATFORM_INFO_NAME, 0, nullptr,
+                               &nameSize1));
+    std::vector<char> name1(nameSize1);
 
-    void printSummary() {
-        for (size_t adapterIndex = 0; adapterIndex < adapters.size();
-             adapterIndex++) {
-            auto adapter = adapters[adapterIndex];
-            auto &platforms = adapterPlatformsMap[adapter];
-            for (size_t platformIndex = 0; platformIndex < platforms.size();
-                 platformIndex++) {
-                auto platform = platforms[platformIndex];
-                auto &devices = platformDevicesMap[platform];
-                for (size_t deviceIndex = 0; deviceIndex < devices.size();
-                     deviceIndex++) {
-                    auto device = devices[deviceIndex];
-                    std::cout << "[adapter(" << adapterIndex << ","
-                              << urinfo::getAdapterBackend(adapter) << "):"
-                              << "platform(" << platformIndex << "):"
-                              << "device(" << deviceIndex << ","
-                              << urinfo::getDeviceType(device) << ")] "
-                              << urinfo::getPlatformName(platform) << ", "
-                              << urinfo::getDeviceName(device) << " "
-                              << urinfo::getDeviceVersion(device) << " "
-                              << "[" << urinfo::getDeviceDriverVersion(device)
-                              << "]\n";
-                }
-            }
-        }
-    }
+    UR_CHECK(urPlatformGetInfo(platform_1, UR_PLATFORM_INFO_NAME, nameSize1,
+                               name1.data(), nullptr));
 
-    void printDetail() {
-        std::cout << "\n"
-                  << "[loader]:"
-                  << "\n";
-        urinfo::printLoaderConfigInfos(loaderConfig);
+    size_t nameSize2 = 0;
+    UR_CHECK(urPlatformGetInfo(platform_1, UR_PLATFORM_INFO_NAME, 0, nullptr,
+                               &nameSize2));
+    std::vector<char> name2(nameSize2);
 
-        for (size_t adapterIndex = 0; adapterIndex < adapters.size();
-             adapterIndex++) {
-            auto adapter = adapters[adapterIndex];
-            std::cout << "\n"
-                      << "[adapter(" << adapterIndex << ")]:"
-                      << "\n";
-            urinfo::printAdapterInfos(adapter);
+    UR_CHECK(urPlatformGetInfo(platform_1, UR_PLATFORM_INFO_NAME, nameSize2,
+                               name2.data(), nullptr));
 
-            size_t numPlatforms = adapterPlatformsMap[adapter].size();
-            for (size_t platformIndex = 0; platformIndex < numPlatforms;
-                 platformIndex++) {
-                auto platform = adapterPlatformsMap[adapter][platformIndex];
-                std::cout << "\n"
-                          << "[adapter(" << adapterIndex << "),"
-                          << "platform(" << platformIndex << ")]:"
-                          << "\n";
-                urinfo::printPlatformInfos(platform);
+    uint32_t numDevices = 0;
+    ur_device_type_t device_type = UR_DEVICE_TYPE_DEFAULT;
+    urDeviceGet(platform_1, device_type, 0, 0, &numDevices);
 
-                size_t numDevices = platformDevicesMap[platform].size();
-                for (size_t deviceI = 0; deviceI < numDevices; deviceI++) {
-                    auto device = platformDevicesMap[platform][deviceI];
-                    std::cout << "\n"
-                              << "[adapter(" << adapterIndex << "),"
-                              << "platform(" << platformIndex << "),"
-                              << "device(" << deviceI << ")]:"
-                              << "\n";
-                    urinfo::printDeviceInfos(device);
-                }
-            }
-        }
-    }
+    std::vector<ur_device_handle_t> devices(numDevices);
 
-    ~app() {
-        urLoaderConfigRelease(loaderConfig);
-        urTearDown(nullptr);
-    }
-};
-} // namespace urinfo
+    urDeviceGet(platform_1, device_type, 1, devices.data(), nullptr);
 
-int main(int argc, const char **argv) {
-    auto app = urinfo::app{argc, argv};
-    app.printSummary();
-    if (app.verbose) {
-        app.printDetail();
-    }
+    auto device_1 = devices[0];
+    size_t version_size = 0;
+    UR_CHECK(urPlatformGetInfo(platform_1, UR_PLATFORM_INFO_VERSION, 0, nullptr,
+                               &version_size));
+
+    std::vector<char> version_string(version_size);
+    UR_CHECK(urPlatformGetInfo(platform_1, UR_PLATFORM_INFO_VERSION,
+                               version_size, version_string.data(), nullptr));
+
+    size_t nameSize3 = 0;
+    UR_CHECK(urPlatformGetInfo(platform_1, UR_PLATFORM_INFO_NAME, 0, nullptr,
+                               &nameSize3));
+
+    std::vector<char> platform_name(nameSize3);
+    UR_CHECK(urPlatformGetInfo(platform_1, UR_PLATFORM_INFO_NAME, 48,
+                               platform_name.data(), nullptr));
+
+    ur_device_type_t device_type_q;
+    UR_CHECK(urDeviceGetInfo(device_1, UR_DEVICE_INFO_TYPE,
+                             sizeof(device_type_q), &device_type_q, nullptr));
+
+    ur_device_handle_t parentDevice = nullptr;
+    UR_CHECK(urDeviceGetInfo(device_1, UR_DEVICE_INFO_PARENT_DEVICE,
+                             sizeof(parentDevice), &parentDevice, nullptr));
+
+    UR_CHECK(urDeviceRetain(device_1));
+
+    size_t extensionsSize = 0;
+    UR_CHECK(urDeviceGetInfo(device_1, UR_DEVICE_INFO_EXTENSIONS, 0, nullptr,
+                             &extensionsSize));
+
+    std::vector<char> deviceExtensions(extensionsSize);
+    UR_CHECK(urDeviceGetInfo(device_1, UR_DEVICE_INFO_EXTENSIONS,
+                             extensionsSize, deviceExtensions.data(), nullptr));
+
+    size_t extensionsSize2 = 0;
+    UR_CHECK(urDeviceGetInfo(device_1, UR_DEVICE_INFO_EXTENSIONS, 0, nullptr,
+                             &extensionsSize2));
+
+    std::vector<char> extensions2(extensionsSize2);
+    UR_CHECK(urDeviceGetInfo(device_1, UR_DEVICE_INFO_EXTENSIONS,
+                             extensionsSize2, extensions2.data(), nullptr));
+
+    ur_device_type_t deviceType2;
+    UR_CHECK(urDeviceGetInfo(device_1, UR_DEVICE_INFO_TYPE, sizeof(deviceType2),
+                             &deviceType2, nullptr));
+
+    uint32_t deviceVendorID = 0;
+    UR_CHECK(urDeviceGetInfo(device_1, UR_DEVICE_INFO_VENDOR_ID,
+                             sizeof(deviceVendorID), &deviceVendorID, nullptr));
+
+    size_t driverVersionsSize = 0;
+    UR_CHECK(urDeviceGetInfo(device_1, UR_DEVICE_INFO_DRIVER_VERSION, 0,
+                             nullptr, &driverVersionsSize));
+
+    std::vector<char> deviceDriverVersion(driverVersionsSize);
+
+    UR_CHECK(urDeviceGetInfo(device_1, UR_DEVICE_INFO_DRIVER_VERSION,
+                             driverVersionsSize, deviceDriverVersion.data(),
+                             nullptr));
+
+    size_t deviceNameSize = 0;
+    UR_CHECK(urDeviceGetInfo(device_1, UR_DEVICE_INFO_NAME, 0, nullptr,
+                             &deviceNameSize));
+
+    std::vector<char> deviceName(deviceNameSize);
+    UR_CHECK(urDeviceGetInfo(device_1, UR_DEVICE_INFO_NAME, deviceNameSize,
+                             deviceName.data(), nullptr));
+
+    UR_CHECK(urDeviceRelease(device_1));
+
+    ur_device_type_t deviceType3;
+    UR_CHECK(urDeviceGetInfo(device_1, UR_DEVICE_INFO_TYPE, sizeof(deviceType3),
+                             &deviceType3, nullptr));
+
+    ur_device_handle_t parentDevice2 = nullptr;
+    UR_CHECK(urDeviceGetInfo(device_1, UR_DEVICE_INFO_PARENT_DEVICE,
+                             sizeof(parentDevice2), &parentDevice2, nullptr));
+
+    UR_CHECK(urDeviceRetain(device_1));
+
+    size_t extensionsSize3 = 0;
+    UR_CHECK(urDeviceGetInfo(device_1, UR_DEVICE_INFO_EXTENSIONS, 0, nullptr,
+                             &extensionsSize3));
+    std::vector<char> deviceExtensions2(extensionsSize3);
+
+    UR_CHECK(urDeviceGetInfo(device_1, UR_DEVICE_INFO_EXTENSIONS,
+                             extensionsSize3, deviceExtensions2.data(),
+                             nullptr));
+
+    size_t extensionsSize4 = 0;
+    UR_CHECK(urDeviceGetInfo(device_1, UR_DEVICE_INFO_EXTENSIONS, 0, nullptr,
+                             &extensionsSize4));
+
+    std::vector<char> deviceExtensions3(extensionsSize4);
+    UR_CHECK(urDeviceGetInfo(device_1, UR_DEVICE_INFO_EXTENSIONS,
+                             extensionsSize4, deviceExtensions3.data(),
+                             nullptr));
+
+    UR_CHECK(urDeviceRelease(device_1));
+
+    UR_CHECK(urDeviceRelease(device_1));
+
+    // investigate if this is really true or not
+    auto platform_2_mystery = platform_1;
+
+    ur_platform_backend_t platformBackend2;
+
+    UR_CHECK(urPlatformGetInfo(platform_2_mystery, UR_PLATFORM_INFO_BACKEND,
+                               sizeof(platformBackend2), &platformBackend2,
+                               nullptr));
+
+    size_t platformNameSize2 = 0;
+
+    UR_CHECK(urPlatformGetInfo(platform_2_mystery, UR_PLATFORM_INFO_NAME, 0,
+                               nullptr, &platformNameSize2));
+
+    std::vector<char> platformName2(platformNameSize2);
+
+    UR_CHECK(urPlatformGetInfo(platform_2_mystery, UR_PLATFORM_INFO_NAME,
+                               platformNameSize2, platformName2.data(),
+                               nullptr));
+
+    size_t platformNameSize3 = 0;
+
+    UR_CHECK(urPlatformGetInfo(platform_2_mystery, UR_PLATFORM_INFO_NAME, 0,
+                               nullptr, &platformNameSize3));
+
+    std::vector<char> platformName3(platformNameSize3);
+    UR_CHECK(urPlatformGetInfo(platform_2_mystery, UR_PLATFORM_INFO_NAME, 33,
+                               platformName3.data(), nullptr));
+
+    uint32_t numDevice2 = 0;
+
+    UR_CHECK(urDeviceGet(platform_2_mystery, device_type, 0, 0, &numDevice2));
+
+    ur_device_handle_t device_2 = nullptr;
+
+    UR_CHECK(
+        urDeviceGet(platform_2_mystery, device_type, 1, &device_2, nullptr));
+
+    size_t platformVersionSize = 0;
+
+    UR_CHECK(urPlatformGetInfo(platform_2_mystery, UR_PLATFORM_INFO_VERSION, 0,
+                               nullptr, &platformVersionSize));
+
+    std::vector<char> platformVersion(platformVersionSize);
+
+    UR_CHECK(urPlatformGetInfo(platform_2_mystery, UR_PLATFORM_INFO_VERSION,
+                               platformVersionSize, platformVersion.data(),
+                               nullptr));
+
+    size_t platformNameSize4 = 0;
+
+    UR_CHECK(urPlatformGetInfo(platform_2_mystery, UR_PLATFORM_INFO_NAME, 0,
+                               nullptr, &platformNameSize4));
+
+    std::vector<char> platformName4(platformNameSize4);
+
+    UR_CHECK(urPlatformGetInfo(platform_2_mystery, UR_PLATFORM_INFO_NAME, 33,
+                               platformName4.data(), nullptr));
+
+    ur_device_type_t deviceType4;
+
+    UR_CHECK(urDeviceGetInfo(device_2, UR_DEVICE_INFO_TYPE, sizeof(deviceType4),
+                             &deviceType4, nullptr));
+
+    ur_device_handle_t device2Parent = nullptr;
+
+    UR_CHECK(urDeviceGetInfo(device_2, UR_DEVICE_INFO_PARENT_DEVICE,
+                             sizeof(device2Parent), &device2Parent, nullptr));
+
+    UR_CHECK(urDeviceRetain(device_2));
+
+    size_t deviceExtensionsSize = 0;
+
+    UR_CHECK(urDeviceGetInfo(device_2, UR_DEVICE_INFO_EXTENSIONS, 0, nullptr,
+                             &deviceExtensionsSize));
+
+    std::vector<char> deviceExtensions4(deviceExtensionsSize);
+
+    UR_CHECK(urDeviceGetInfo(device_2, UR_DEVICE_INFO_EXTENSIONS,
+                             deviceExtensionsSize, &deviceExtensions4,
+                             nullptr));
+
+    size_t deviceExtenionsSize2 = 0;
+
+    UR_CHECK(urDeviceGetInfo(device_2, UR_DEVICE_INFO_EXTENSIONS, 0, nullptr,
+                             &deviceExtenionsSize2));
+
+    std::vector<char> deviceExtensions5(deviceExtenionsSize2);
+
+    UR_CHECK(urDeviceGetInfo(device_2, UR_DEVICE_INFO_EXTENSIONS,
+                             deviceExtenionsSize2, deviceExtensions5.data(),
+                             nullptr));
+
+    ur_device_type_t deviceType5;
+
+    UR_CHECK(urDeviceGetInfo(device_2, UR_DEVICE_INFO_TYPE, sizeof(deviceType5),
+                             &deviceType5, nullptr));
+
+    uint32_t deviceVendorID2;
+
+    UR_CHECK(urDeviceGetInfo(device_2, UR_DEVICE_INFO_VENDOR_ID, 4,
+                             &deviceVendorID2, nullptr));
+
+    size_t deviceDriverVersionsSize = 0;
+
+    UR_CHECK(urDeviceGetInfo(device_2, UR_DEVICE_INFO_DRIVER_VERSION, 0,
+                             nullptr, &deviceDriverVersionsSize));
+
+    std::vector<char> deviceDriverVersion2(deviceDriverVersionsSize);
+
+    UR_CHECK(urDeviceGetInfo(device_2, UR_DEVICE_INFO_DRIVER_VERSION,
+                             deviceDriverVersionsSize,
+                             deviceDriverVersion2.data(), nullptr));
+
+    size_t deviceNameSize2 = 0;
+
+    // kaboom??
+    UR_CHECK(urDeviceGetInfo(device_2, UR_DEVICE_INFO_NAME, 0, nullptr,
+                             &deviceNameSize2));
+
+    UR_CHECK(urDeviceRelease(device_1));
+    UR_CHECK(urDeviceRelease(device_2));
+    UR_CHECK(urAdapterRelease(adapters[0]));
+    UR_CHECK(urTearDown(nullptr));
     return 0;
 }
