@@ -51,6 +51,7 @@ UR_DLLEXPORT ur_result_t UR_APICALL
 urPlatformGetInfo(ur_platform_handle_t hPlatform, ur_platform_info_t propName,
                   size_t propSize, void *pPropValue, size_t *pSizeRet) {
 
+	printf("PlatformGetInfo for platform handle %p\n", hPlatform);
   UrReturnHelper ReturnValue(propSize, pPropValue, pSizeRet);
   const cl_int CLPropName = mapURPlatformInfoToCL(propName);
 
@@ -96,6 +97,12 @@ urPlatformGet(ur_adapter_handle_t *, uint32_t, uint32_t NumEntries,
     }
   }
 
+  if(phPlatforms && NumEntries > 0) {
+	printf("returning %d platforms\n", NumEntries);
+	for(int i=0;i<NumEntries;i++) {
+		printf("platform[%d]: %p\n", i, phPlatforms[i]);
+	}
+  }
   return mapCLErrorToUR(Result);
 }
 

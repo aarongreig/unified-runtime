@@ -54,8 +54,8 @@ int main(int, char **) {
     std::vector<ur_device_handle_t> devices(numDevices);
 
     urDeviceGet(platform_1, device_type, 1, devices.data(), nullptr);
-
     auto device_1 = devices[0];
+
     size_t version_size = 0;
     UR_CHECK(urPlatformGetInfo(platform_1, UR_PLATFORM_INFO_VERSION, 0, nullptr,
                                &version_size));
@@ -71,7 +71,6 @@ int main(int, char **) {
     std::vector<char> platform_name(nameSize3);
     UR_CHECK(urPlatformGetInfo(platform_1, UR_PLATFORM_INFO_NAME, 48,
                                platform_name.data(), nullptr));
-
     ur_device_type_t device_type_q;
     UR_CHECK(urDeviceGetInfo(device_1, UR_DEVICE_INFO_TYPE,
                              sizeof(device_type_q), &device_type_q, nullptr));
@@ -79,6 +78,7 @@ int main(int, char **) {
     ur_device_handle_t parentDevice = nullptr;
     UR_CHECK(urDeviceGetInfo(device_1, UR_DEVICE_INFO_PARENT_DEVICE,
                              sizeof(parentDevice), &parentDevice, nullptr));
+
 
     UR_CHECK(urDeviceRetain(device_1));
 
@@ -159,7 +159,7 @@ int main(int, char **) {
     UR_CHECK(urDeviceRelease(device_1));
 
     // investigate if this is really true or not
-    auto platform_2_mystery = platform_1;
+    auto platform_2_mystery = platforms[1];
 
     ur_platform_backend_t platformBackend2;
 
@@ -184,7 +184,7 @@ int main(int, char **) {
                                nullptr, &platformNameSize3));
 
     std::vector<char> platformName3(platformNameSize3);
-    UR_CHECK(urPlatformGetInfo(platform_2_mystery, UR_PLATFORM_INFO_NAME, 33,
+    UR_CHECK(urPlatformGetInfo(platform_2_mystery, UR_PLATFORM_INFO_NAME, platformNameSize3,
                                platformName3.data(), nullptr));
 
     uint32_t numDevice2 = 0;
@@ -214,9 +214,10 @@ int main(int, char **) {
 
     std::vector<char> platformName4(platformNameSize4);
 
-    UR_CHECK(urPlatformGetInfo(platform_2_mystery, UR_PLATFORM_INFO_NAME, 33,
+    UR_CHECK(urPlatformGetInfo(platform_2_mystery, UR_PLATFORM_INFO_NAME, platformNameSize4,
                                platformName4.data(), nullptr));
 
+    
     ur_device_type_t deviceType4;
 
     UR_CHECK(urDeviceGetInfo(device_2, UR_DEVICE_INFO_TYPE, sizeof(deviceType4),
@@ -237,7 +238,7 @@ int main(int, char **) {
     std::vector<char> deviceExtensions4(deviceExtensionsSize);
 
     UR_CHECK(urDeviceGetInfo(device_2, UR_DEVICE_INFO_EXTENSIONS,
-                             deviceExtensionsSize, &deviceExtensions4,
+                             deviceExtensionsSize, deviceExtensions4.data(),
                              nullptr));
 
     size_t deviceExtenionsSize2 = 0;
