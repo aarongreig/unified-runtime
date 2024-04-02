@@ -33,6 +33,10 @@ if (NOT DEFINED LEVEL_ZERO_LIBRARY OR NOT DEFINED LEVEL_ZERO_INCLUDE_DIR)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-warning-option")
     endif()
 
+    if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang|IntelLLVM" )
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-covered-switch-default")
+    endif()
+
     set(LEVEL_ZERO_LOADER_REPO "https://github.com/oneapi-src/level-zero.git")
     set(LEVEL_ZERO_LOADER_TAG v1.16.1)
 
