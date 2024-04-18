@@ -7,7 +7,7 @@
  * See LICENSE.TXT
  * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
  *
- * @file sanitizer_utils.cpp
+ * @file san_utils.cpp
  *
  */
 
@@ -27,7 +27,7 @@ namespace ur_sanitizer_layer {
 
 bool IsInASanContext() { return (void *)__asan_init != nullptr; }
 
-bool MmapFixedNoReserve(uptr Addr, uptr Size) {
+static bool ReserveShadowMem(uptr Addr, uptr Size) {
     Size = RoundUpTo(Size, EXEC_PAGESIZE);
     Addr = RoundDownTo(Addr, EXEC_PAGESIZE);
     void *P =
@@ -36,14 +36,42 @@ bool MmapFixedNoReserve(uptr Addr, uptr Size) {
     return Addr == (uptr)P;
 }
 
-bool MmapFixedNoAccess(uptr Addr, uptr Size) {
+static bool ProtectShadowGap(uptr Addr, uptr Size) {
     void *P =
         mmap((void *)Addr, Size, PROT_NONE,
              MAP_PRIVATE | MAP_FIXED | MAP_NORESERVE | MAP_ANONYMOUS, -1, 0);
     return Addr == (uptr)P;
 }
 
-bool Munmap(uptr Addr, uptr Size) { return munmap((void *)Addr, Size) == 0; }
+bool SetupShadowMem() {
+    if (!ReserveShadowMem(LOW_SHADOW_BEGIN, LOW_SHADOW_SIZE)) {
+        return false;
+    }
+
+    if (!ReserveShadowMem(HIGH_SHADOW_BEGIN, HIGH_SHADOW_SIZE)) {
+        return false;
+    }
+
+    if (!ProtectShadowGap(SHADOW_GAP_BEGIN, SHADOW_GAP_SIZE)) {
+        return false;
+    }
+    return true;
+}
+
+bool DestroyShadowMem() {
+    if (munmap((void *)LOW_SHADOW_BEGIN, LOW_SHADOW_SIZE) == -1) {
+        return false;
+    }
+
+    if (munmap((void *)HIGH_SHADOW_BEGIN, HIGH_SHADOW_SIZE) == -1) {
+        return false;
+    }
+
+    if (munmap((void *)SHADOW_GAP_BEGIN, SHADOW_GAP_SIZE) == -1) {
+        return false;
+    }
+    return true;
+}
 
 void *GetMemFunctionPointer(const char *FuncName) {
     void *handle = dlopen(LIBC_SO, RTLD_LAZY | RTLD_NOLOAD);
