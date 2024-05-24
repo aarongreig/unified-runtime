@@ -702,7 +702,8 @@ __urdlllocal ur_result_t UR_APICALL urDeviceGetNativeHandle(
 __urdlllocal ur_result_t UR_APICALL urDeviceCreateWithNativeHandle(
     ur_native_handle_t
         hNativeDevice, ///< [in][nocheck] the native handle of the device.
-    ur_platform_handle_t hPlatform, ///< [in] handle of the platform instance
+    ur_platform_handle_t
+        hPlatform, ///< [in][optional] handle of the platform instance
     const ur_device_native_properties_t *
         pProperties, ///< [in][optional] pointer to native device properties struct.
     ur_device_handle_t
@@ -716,10 +717,6 @@ __urdlllocal ur_result_t UR_APICALL urDeviceCreateWithNativeHandle(
     }
 
     if (context.enableParameterValidation) {
-        if (NULL == hPlatform) {
-            return UR_RESULT_ERROR_INVALID_NULL_HANDLE;
-        }
-
         if (NULL == phDevice) {
             return UR_RESULT_ERROR_INVALID_NULL_POINTER;
         }
