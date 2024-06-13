@@ -225,6 +225,7 @@ typedef enum ur_function_t {
     UR_FUNCTION_ENQUEUE_TIMESTAMP_RECORDING_EXP = 223,                         ///< Enumerator for ::urEnqueueTimestampRecordingExp
     UR_FUNCTION_ENQUEUE_KERNEL_LAUNCH_CUSTOM_EXP = 224,                        ///< Enumerator for ::urEnqueueKernelLaunchCustomExp
     UR_FUNCTION_KERNEL_GET_SUGGESTED_LOCAL_WORK_SIZE = 225,                    ///< Enumerator for ::urKernelGetSuggestedLocalWorkSize
+    UR_FUNCTION_LOADER_CONFIG_SET_MOCKING_ENABLED = 231,                       ///< Enumerator for ::urLoaderConfigSetMockingEnabled
     /// @cond
     UR_FUNCTION_FORCE_UINT32 = 0x7fffffff
     /// @endcond
@@ -598,7 +599,7 @@ urLoaderConfigCreate(
 ///         + `NULL == hLoaderConfig`
 UR_APIEXPORT ur_result_t UR_APICALL
 urLoaderConfigRetain(
-    ur_loader_config_handle_t hLoaderConfig ///< [in] loader config handle to retain
+    ur_loader_config_handle_t hLoaderConfig ///< [in][retain] loader config handle to retain
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -619,7 +620,7 @@ urLoaderConfigRetain(
 ///         + `NULL == hLoaderConfig`
 UR_APIEXPORT ur_result_t UR_APICALL
 urLoaderConfigRelease(
-    ur_loader_config_handle_t hLoaderConfig ///< [in] config handle to release
+    ur_loader_config_handle_t hLoaderConfig ///< [in][release] config handle to release
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -740,6 +741,35 @@ urLoaderConfigSetCodeLocationCallback(
 );
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Callback to replace or instrument generic mock functionality in the
+///        mock adapter.
+typedef ur_result_t (*ur_mock_callback_t)(
+    void *pParams ///< [in][out] Pointer to the appropriate param struct for the function
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief The only adapter reported with mock enabled will be the mock adapter.
+///
+/// @details
+///     - The mock adapter will default to returning ::UR_RESULT_SUCCESS for all
+///       entry points. It will also create and correctly reference count dummy
+///       handles where appropriate. Its behaviour can be modified by linking
+///       the ::ur_mock_headers library and using the callbacks object.
+///
+/// @returns
+///     - ::UR_RESULT_SUCCESS
+///     - ::UR_RESULT_ERROR_UNINITIALIZED
+///     - ::UR_RESULT_ERROR_DEVICE_LOST
+///     - ::UR_RESULT_ERROR_ADAPTER_SPECIFIC
+///     - ::UR_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `NULL == hLoaderConfig`
+UR_APIEXPORT ur_result_t UR_APICALL
+urLoaderConfigSetMockingEnabled(
+    ur_loader_config_handle_t hLoaderConfig, ///< [in] Handle to config object mocking will be enabled for.
+    ur_bool_t enable                         ///< [in] Handle to config object the layer will be enabled for.
+);
+
+///////////////////////////////////////////////////////////////////////////////
 /// @brief Initialize the 'oneAPI' loader
 ///
 /// @details
@@ -842,7 +872,7 @@ urAdapterGet(
 ///         + `NULL == hAdapter`
 UR_APIEXPORT ur_result_t UR_APICALL
 urAdapterRelease(
-    ur_adapter_handle_t hAdapter ///< [in] Adapter handle to release
+    ur_adapter_handle_t hAdapter ///< [in][release] Adapter handle to release
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -860,7 +890,7 @@ urAdapterRelease(
 ///         + `NULL == hAdapter`
 UR_APIEXPORT ur_result_t UR_APICALL
 urAdapterRetain(
-    ur_adapter_handle_t hAdapter ///< [in] Adapter handle to retain
+    ur_adapter_handle_t hAdapter ///< [in][retain] Adapter handle to retain
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1727,7 +1757,7 @@ urDeviceGetInfo(
 ///         + `NULL == hDevice`
 UR_APIEXPORT ur_result_t UR_APICALL
 urDeviceRetain(
-    ur_device_handle_t hDevice ///< [in] handle of the device to get a reference of.
+    ur_device_handle_t hDevice ///< [in][retain] handle of the device to get a reference of.
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1755,7 +1785,7 @@ urDeviceRetain(
 ///         + `NULL == hDevice`
 UR_APIEXPORT ur_result_t UR_APICALL
 urDeviceRelease(
-    ur_device_handle_t hDevice ///< [in] handle of the device to release.
+    ur_device_handle_t hDevice ///< [in][release] handle of the device to release.
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2208,7 +2238,7 @@ urContextCreate(
 ///         + `NULL == hContext`
 UR_APIEXPORT ur_result_t UR_APICALL
 urContextRetain(
-    ur_context_handle_t hContext ///< [in] handle of the context to get a reference of.
+    ur_context_handle_t hContext ///< [in][retain] handle of the context to get a reference of.
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2262,7 +2292,7 @@ typedef enum ur_context_info_t {
 ///         + `NULL == hContext`
 UR_APIEXPORT ur_result_t UR_APICALL
 urContextRelease(
-    ur_context_handle_t hContext ///< [in] handle of the context to release.
+    ur_context_handle_t hContext ///< [in][release] handle of the context to release.
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2726,7 +2756,7 @@ urMemBufferCreate(
 ///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
 UR_APIEXPORT ur_result_t UR_APICALL
 urMemRetain(
-    ur_mem_handle_t hMem ///< [in] handle of the memory object to get access
+    ur_mem_handle_t hMem ///< [in][retain] handle of the memory object to get access
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2748,7 +2778,7 @@ urMemRetain(
 ///     - ::UR_RESULT_ERROR_OUT_OF_HOST_MEMORY
 UR_APIEXPORT ur_result_t UR_APICALL
 urMemRelease(
-    ur_mem_handle_t hMem ///< [in] handle of the memory object to release
+    ur_mem_handle_t hMem ///< [in][release] handle of the memory object to release
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -3114,7 +3144,7 @@ urSamplerCreate(
 ///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
 UR_APIEXPORT ur_result_t UR_APICALL
 urSamplerRetain(
-    ur_sampler_handle_t hSampler ///< [in] handle of the sampler object to get access
+    ur_sampler_handle_t hSampler ///< [in][retain] handle of the sampler object to get access
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -3137,7 +3167,7 @@ urSamplerRetain(
 ///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
 UR_APIEXPORT ur_result_t UR_APICALL
 urSamplerRelease(
-    ur_sampler_handle_t hSampler ///< [in] handle of the sampler object to release
+    ur_sampler_handle_t hSampler ///< [in][release] handle of the sampler object to release
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -3674,7 +3704,7 @@ urUSMPoolCreate(
 ///         + `NULL == pPool`
 UR_APIEXPORT ur_result_t UR_APICALL
 urUSMPoolRetain(
-    ur_usm_pool_handle_t pPool ///< [in] pointer to USM memory pool
+    ur_usm_pool_handle_t pPool ///< [in][retain] pointer to USM memory pool
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -3696,7 +3726,7 @@ urUSMPoolRetain(
 ///         + `NULL == pPool`
 UR_APIEXPORT ur_result_t UR_APICALL
 urUSMPoolRelease(
-    ur_usm_pool_handle_t pPool ///< [in] pointer to USM memory pool
+    ur_usm_pool_handle_t pPool ///< [in][release] pointer to USM memory pool
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -4030,7 +4060,7 @@ urPhysicalMemCreate(
 ///         + `NULL == hPhysicalMem`
 UR_APIEXPORT ur_result_t UR_APICALL
 urPhysicalMemRetain(
-    ur_physical_mem_handle_t hPhysicalMem ///< [in] handle of the physical memory object to retain.
+    ur_physical_mem_handle_t hPhysicalMem ///< [in][retain] handle of the physical memory object to retain.
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -4045,7 +4075,7 @@ urPhysicalMemRetain(
 ///         + `NULL == hPhysicalMem`
 UR_APIEXPORT ur_result_t UR_APICALL
 urPhysicalMemRelease(
-    ur_physical_mem_handle_t hPhysicalMem ///< [in] handle of the physical memory object to release.
+    ur_physical_mem_handle_t hPhysicalMem ///< [in][release] handle of the physical memory object to release.
 );
 
 #if !defined(__GNUC__)
@@ -4313,7 +4343,7 @@ urProgramLink(
 ///         + `NULL == hProgram`
 UR_APIEXPORT ur_result_t UR_APICALL
 urProgramRetain(
-    ur_program_handle_t hProgram ///< [in] handle for the Program to retain
+    ur_program_handle_t hProgram ///< [in][retain] handle for the Program to retain
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -4338,7 +4368,7 @@ urProgramRetain(
 ///         + `NULL == hProgram`
 UR_APIEXPORT ur_result_t UR_APICALL
 urProgramRelease(
-    ur_program_handle_t hProgram ///< [in] handle for the Program to release
+    ur_program_handle_t hProgram ///< [in][release] handle for the Program to release
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -4960,7 +4990,7 @@ urKernelGetSubGroupInfo(
 ///         + `NULL == hKernel`
 UR_APIEXPORT ur_result_t UR_APICALL
 urKernelRetain(
-    ur_kernel_handle_t hKernel ///< [in] handle for the Kernel to retain
+    ur_kernel_handle_t hKernel ///< [in][retain] handle for the Kernel to retain
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -4985,7 +5015,7 @@ urKernelRetain(
 ///         + `NULL == hKernel`
 UR_APIEXPORT ur_result_t UR_APICALL
 urKernelRelease(
-    ur_kernel_handle_t hKernel ///< [in] handle for the Kernel to release
+    ur_kernel_handle_t hKernel ///< [in][release] handle for the Kernel to release
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -5467,7 +5497,7 @@ urQueueCreate(
 ///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
 UR_APIEXPORT ur_result_t UR_APICALL
 urQueueRetain(
-    ur_queue_handle_t hQueue ///< [in] handle of the queue object to get access
+    ur_queue_handle_t hQueue ///< [in][retain] handle of the queue object to get access
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -5496,7 +5526,7 @@ urQueueRetain(
 ///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
 UR_APIEXPORT ur_result_t UR_APICALL
 urQueueRelease(
-    ur_queue_handle_t hQueue ///< [in] handle of the queue object to release
+    ur_queue_handle_t hQueue ///< [in][release] handle of the queue object to release
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -5861,7 +5891,7 @@ urEventWait(
 ///     - ::UR_RESULT_ERROR_OUT_OF_HOST_MEMORY
 UR_APIEXPORT ur_result_t UR_APICALL
 urEventRetain(
-    ur_event_handle_t hEvent ///< [in] handle of the event object
+    ur_event_handle_t hEvent ///< [in][retain] handle of the event object
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -5884,7 +5914,7 @@ urEventRetain(
 ///     - ::UR_RESULT_ERROR_OUT_OF_HOST_MEMORY
 UR_APIEXPORT ur_result_t UR_APICALL
 urEventRelease(
-    ur_event_handle_t hEvent ///< [in] handle of the event object
+    ur_event_handle_t hEvent ///< [in][release] handle of the event object
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -7893,7 +7923,7 @@ UR_APIEXPORT ur_result_t UR_APICALL
 urBindlessImagesReleaseInteropExp(
     ur_context_handle_t hContext,           ///< [in] handle of the context object
     ur_device_handle_t hDevice,             ///< [in] handle of the device object
-    ur_exp_interop_mem_handle_t hInteropMem ///< [in] handle of interop memory to be freed
+    ur_exp_interop_mem_handle_t hInteropMem ///< [in][release] handle of interop memory to be freed
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -8191,7 +8221,7 @@ urCommandBufferCreateExp(
 ///     - ::UR_RESULT_ERROR_OUT_OF_HOST_MEMORY
 UR_APIEXPORT ur_result_t UR_APICALL
 urCommandBufferRetainExp(
-    ur_exp_command_buffer_handle_t hCommandBuffer ///< [in] Handle of the command-buffer object.
+    ur_exp_command_buffer_handle_t hCommandBuffer ///< [in][retain] Handle of the command-buffer object.
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -8210,7 +8240,7 @@ urCommandBufferRetainExp(
 ///     - ::UR_RESULT_ERROR_OUT_OF_HOST_MEMORY
 UR_APIEXPORT ur_result_t UR_APICALL
 urCommandBufferReleaseExp(
-    ur_exp_command_buffer_handle_t hCommandBuffer ///< [in] Handle of the command-buffer object.
+    ur_exp_command_buffer_handle_t hCommandBuffer ///< [in][release] Handle of the command-buffer object.
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -8758,7 +8788,7 @@ urCommandBufferRetainCommandExp(
 ///     - ::UR_RESULT_ERROR_OUT_OF_HOST_MEMORY
 UR_APIEXPORT ur_result_t UR_APICALL
 urCommandBufferReleaseCommandExp(
-    ur_exp_command_buffer_command_handle_t hCommand ///< [in] Handle of the command-buffer command.
+    ur_exp_command_buffer_command_handle_t hCommand ///< [in][release] Handle of the command-buffer command.
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -9518,6 +9548,15 @@ typedef struct ur_loader_config_set_code_location_callback_params_t {
     ur_code_location_callback_t *ppfnCodeloc;
     void **ppUserData;
 } ur_loader_config_set_code_location_callback_params_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Function parameters for urLoaderConfigSetMockingEnabled
+/// @details Each entry is a pointer to the parameter passed to the function;
+///     allowing the callback the ability to modify the parameter's value
+typedef struct ur_loader_config_set_mocking_enabled_params_t {
+    ur_loader_config_handle_t *phLoaderConfig;
+    ur_bool_t *penable;
+} ur_loader_config_set_mocking_enabled_params_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Function parameters for urPlatformGet

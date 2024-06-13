@@ -141,6 +141,7 @@ EXPORTS
 	urLoaderConfigRelease
 	urLoaderConfigRetain
 	urLoaderConfigSetCodeLocationCallback
+	urLoaderConfigSetMockingEnabled
 	urLoaderInit
 	urLoaderTearDown
 	urMemBufferCreate
@@ -355,6 +356,7 @@ EXPORTS
 	urPrintLoaderConfigReleaseParams
 	urPrintLoaderConfigRetainParams
 	urPrintLoaderConfigSetCodeLocationCallbackParams
+	urPrintLoaderConfigSetMockingEnabledParams
 	urPrintLoaderInitParams
 	urPrintLoaderTearDownParams
 	urPrintMapFlags
