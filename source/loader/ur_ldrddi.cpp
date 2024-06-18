@@ -5893,7 +5893,7 @@ urBindlessImagesUnsampledImageHandleDestroyExp(
     ur_context_handle_t hContext, ///< [in] handle of the context object
     ur_device_handle_t hDevice,   ///< [in] handle of the device object
     ur_exp_image_handle_t
-        hImage ///< [in] pointer to handle of image object to destroy
+        hImage ///< [in][release] pointer to handle of image object to destroy
 ) {
     ur_result_t result = UR_RESULT_SUCCESS;
 
@@ -5917,6 +5917,13 @@ urBindlessImagesUnsampledImageHandleDestroyExp(
     // forward to device-platform
     result = pfnUnsampledImageHandleDestroyExp(hContext, hDevice, hImage);
 
+    if (UR_RESULT_SUCCESS != result) {
+        return result;
+    }
+
+    // release loader handle
+    ur_exp_image_factory.release(hImage);
+
     return result;
 }
 
@@ -5927,7 +5934,7 @@ urBindlessImagesSampledImageHandleDestroyExp(
     ur_context_handle_t hContext, ///< [in] handle of the context object
     ur_device_handle_t hDevice,   ///< [in] handle of the device object
     ur_exp_image_handle_t
-        hImage ///< [in] pointer to handle of image object to destroy
+        hImage ///< [in][release] pointer to handle of image object to destroy
 ) {
     ur_result_t result = UR_RESULT_SUCCESS;
 
@@ -5950,6 +5957,13 @@ urBindlessImagesSampledImageHandleDestroyExp(
 
     // forward to device-platform
     result = pfnSampledImageHandleDestroyExp(hContext, hDevice, hImage);
+
+    if (UR_RESULT_SUCCESS != result) {
+        return result;
+    }
+
+    // release loader handle
+    ur_exp_image_factory.release(hImage);
 
     return result;
 }
@@ -6536,7 +6550,7 @@ __urdlllocal ur_result_t UR_APICALL urBindlessImagesDestroyExternalSemaphoreExp(
     ur_context_handle_t hContext, ///< [in] handle of the context object
     ur_device_handle_t hDevice,   ///< [in] handle of the device object
     ur_exp_interop_semaphore_handle_t
-        hInteropSemaphore ///< [in] handle of interop semaphore to be destroyed
+        hInteropSemaphore ///< [in][release] handle of interop semaphore to be destroyed
 ) {
     ur_result_t result = UR_RESULT_SUCCESS;
 
@@ -6562,6 +6576,13 @@ __urdlllocal ur_result_t UR_APICALL urBindlessImagesDestroyExternalSemaphoreExp(
     // forward to device-platform
     result =
         pfnDestroyExternalSemaphoreExp(hContext, hDevice, hInteropSemaphore);
+
+    if (UR_RESULT_SUCCESS != result) {
+        return result;
+    }
+
+    // release loader handle
+    ur_exp_interop_semaphore_factory.release(hInteropSemaphore);
 
     return result;
 }
