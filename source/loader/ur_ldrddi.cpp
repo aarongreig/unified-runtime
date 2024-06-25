@@ -106,9 +106,6 @@ __urdlllocal ur_result_t UR_APICALL urAdapterRelease(
         return result;
     }
 
-    // release loader handle
-    ur_adapter_factory.release(hAdapter);
-
     return result;
 }
 
@@ -641,9 +638,6 @@ __urdlllocal ur_result_t UR_APICALL urDeviceRelease(
         return result;
     }
 
-    // release loader handle
-    ur_device_factory.release(hDevice);
-
     return result;
 }
 
@@ -924,9 +918,6 @@ __urdlllocal ur_result_t UR_APICALL urContextRelease(
     if (UR_RESULT_SUCCESS != result) {
         return result;
     }
-
-    // release loader handle
-    ur_context_factory.release(hContext);
 
     return result;
 }
@@ -1236,9 +1227,6 @@ __urdlllocal ur_result_t UR_APICALL urMemRelease(
     if (UR_RESULT_SUCCESS != result) {
         return result;
     }
-
-    // release loader handle
-    ur_mem_factory.release(hMem);
 
     return result;
 }
@@ -1598,9 +1586,6 @@ __urdlllocal ur_result_t UR_APICALL urSamplerRelease(
     if (UR_RESULT_SUCCESS != result) {
         return result;
     }
-
-    // release loader handle
-    ur_sampler_factory.release(hSampler);
 
     return result;
 }
@@ -2040,9 +2025,6 @@ __urdlllocal ur_result_t UR_APICALL urUSMPoolRelease(
         return result;
     }
 
-    // release loader handle
-    ur_usm_pool_factory.release(pPool);
-
     return result;
 }
 
@@ -2437,9 +2419,6 @@ __urdlllocal ur_result_t UR_APICALL urPhysicalMemRelease(
         return result;
     }
 
-    // release loader handle
-    ur_physical_mem_factory.release(hPhysicalMem);
-
     return result;
 }
 
@@ -2687,9 +2666,6 @@ __urdlllocal ur_result_t UR_APICALL urProgramRelease(
     if (UR_RESULT_SUCCESS != result) {
         return result;
     }
-
-    // release loader handle
-    ur_program_factory.release(hProgram);
 
     return result;
 }
@@ -3285,9 +3261,6 @@ __urdlllocal ur_result_t UR_APICALL urKernelRelease(
         return result;
     }
 
-    // release loader handle
-    ur_kernel_factory.release(hKernel);
-
     return result;
 }
 
@@ -3738,9 +3711,6 @@ __urdlllocal ur_result_t UR_APICALL urQueueRelease(
         return result;
     }
 
-    // release loader handle
-    ur_queue_factory.release(hQueue);
-
     return result;
 }
 
@@ -4051,9 +4021,6 @@ __urdlllocal ur_result_t UR_APICALL urEventRelease(
     if (UR_RESULT_SUCCESS != result) {
         return result;
     }
-
-    // release loader handle
-    ur_event_factory.release(hEvent);
 
     return result;
 }
@@ -5921,9 +5888,6 @@ urBindlessImagesUnsampledImageHandleDestroyExp(
         return result;
     }
 
-    // release loader handle
-    ur_exp_image_factory.release(hImage);
-
     return result;
 }
 
@@ -5961,9 +5925,6 @@ urBindlessImagesSampledImageHandleDestroyExp(
     if (UR_RESULT_SUCCESS != result) {
         return result;
     }
-
-    // release loader handle
-    ur_exp_image_factory.release(hImage);
 
     return result;
 }
@@ -6047,9 +6008,6 @@ __urdlllocal ur_result_t UR_APICALL urBindlessImagesImageFreeExp(
     if (UR_RESULT_SUCCESS != result) {
         return result;
     }
-
-    // release loader handle
-    ur_exp_image_mem_factory.release(hImageMem);
 
     return result;
 }
@@ -6351,9 +6309,6 @@ __urdlllocal ur_result_t UR_APICALL urBindlessImagesMipmapFreeExp(
         return result;
     }
 
-    // release loader handle
-    ur_exp_image_mem_factory.release(hMem);
-
     return result;
 }
 
@@ -6490,9 +6445,6 @@ __urdlllocal ur_result_t UR_APICALL urBindlessImagesReleaseInteropExp(
         return result;
     }
 
-    // release loader handle
-    ur_exp_interop_mem_factory.release(hInteropMem);
-
     return result;
 }
 
@@ -6580,9 +6532,6 @@ __urdlllocal ur_result_t UR_APICALL urBindlessImagesDestroyExternalSemaphoreExp(
     if (UR_RESULT_SUCCESS != result) {
         return result;
     }
-
-    // release loader handle
-    ur_exp_interop_semaphore_factory.release(hInteropSemaphore);
 
     return result;
 }
@@ -6818,9 +6767,6 @@ __urdlllocal ur_result_t UR_APICALL urCommandBufferReleaseExp(
     if (UR_RESULT_SUCCESS != result) {
         return result;
     }
-
-    // release loader handle
-    ur_exp_command_buffer_factory.release(hCommandBuffer);
 
     return result;
 }
@@ -7571,9 +7517,6 @@ __urdlllocal ur_result_t UR_APICALL urCommandBufferReleaseCommandExp(
     if (UR_RESULT_SUCCESS != result) {
         return result;
     }
-
-    // release loader handle
-    ur_exp_command_buffer_command_factory.release(hCommand);
 
     return result;
 }
