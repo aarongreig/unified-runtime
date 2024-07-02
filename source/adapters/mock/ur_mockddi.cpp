@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2024 Intel Corporation
  *
  * Part of the Unified-Runtime Project, under the Apache License v2.0 with LLVM Exceptions.
  * See LICENSE.TXT
@@ -9131,7 +9131,7 @@ __urdlllocal ur_result_t UR_APICALL urCommandBufferEnqueueExp(
 /// @brief Intercept function for urCommandBufferRetainCommandExp
 __urdlllocal ur_result_t UR_APICALL urCommandBufferRetainCommandExp(
     ur_exp_command_buffer_command_handle_t
-        hCommand ///< [in] Handle of the command-buffer command.
+        hCommand ///< [in][retain] Handle of the command-buffer command.
     ) try {
     ur_result_t result = UR_RESULT_SUCCESS;
 
@@ -9153,6 +9153,7 @@ __urdlllocal ur_result_t UR_APICALL urCommandBufferRetainCommandExp(
         result = replaceCallback(&params);
     } else {
 
+        mock::retainDummyHandle(hCommand);
         result = UR_RESULT_SUCCESS;
     }
 
