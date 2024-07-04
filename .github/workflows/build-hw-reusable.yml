@@ -29,7 +29,7 @@ jobs:
     strategy:
       matrix:
         adapter: [
-          {name: "${{inputs.name}}", platform: "${{inputs.platform}}"},
+          {name: "${{inputs.name}}", platform: "${{inputs.platform}}", static: OFF},
         ]
         build_type: [Debug, Release]
         compiler: [{c: gcc, cxx: g++}, {c: clang, cxx: clang++}]
@@ -37,6 +37,10 @@ jobs:
         exclude:
          - adapter: {name: L0, platform: ""}
            compiler: {c: clang, cxx: clang++}
+        include:
+         - adapter: {name: L0, platform: "", static: ON}
+           build_type: [Debug]
+           compiler: {c: gcc, cxx: g++}
 
     runs-on: ${{matrix.adapter.name}}
 
@@ -63,6 +67,7 @@ jobs:
         -DUR_DEVELOPER_MODE=ON
         -DUR_BUILD_TESTS=ON
         -DUR_BUILD_ADAPTER_${{matrix.adapter.name}}=ON
+        -DUR_STATIC_ADAPTER_${{matrix.adapter.name}}=${{matrix.adapter.static}}
         -DUR_DPCXX=${{github.workspace}}/dpcpp_compiler/bin/clang++
         -DUR_SYCL_LIBRARY_DIR=${{github.workspace}}/dpcpp_compiler/lib
         ${{ matrix.adapter.name == 'HIP' && '-DUR_CONFORMANCE_AMD_ARCH=gfx1030' || '' }}

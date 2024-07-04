@@ -8,12 +8,22 @@
  *
  */
 #include "ur_loader.hpp"
+#ifdef UR_STATIC_ADAPTER_LEVEL_ZERO
+#include "adapters/level_zero/ur_interface_loader.hpp"
+#endif
 
 namespace ur_loader {
 ///////////////////////////////////////////////////////////////////////////////
 context_t *getContext() { return context_t::get_direct(); }
 
 ///////////////////////////////////////////////////////////////////////////////
+context_t::context_t() {
+#ifdef UR_STATIC_ADAPTER_LEVEL_ZERO
+    auto &level_zero = platforms.emplace_back(nullptr);
+    ur::level_zero::urAdapterGetDdiTables(&level_zero.dditable.ur);
+#endif
+}
+
 ur_result_t context_t::init() {
     for (const auto &adapterPaths : adapter_registry) {
         for (const auto &path : adapterPaths) {

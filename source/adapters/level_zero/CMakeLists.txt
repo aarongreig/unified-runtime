@@ -93,8 +93,12 @@ target_include_directories(LevelZeroLoader-Headers
     INTERFACE "${LEVEL_ZERO_INCLUDE_DIR}"
 )
 
-add_ur_adapter(${TARGET_NAME}
-    SHARED
+set(ADAPTER_LIB_TYPE SHARED)
+if(UR_STATIC_ADAPTER_L0)
+  set(ADAPTER_LIB_TYPE STATIC)
+endif()
+
+add_ur_adapter(${TARGET_NAME} ${ADAPTER_LIB_TYPE}
     ${CMAKE_CURRENT_SOURCE_DIR}/ur_interface_loader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/adapter.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/adapter.cpp
@@ -136,6 +140,10 @@ add_ur_adapter(${TARGET_NAME}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../ur/ur.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/v2/queue_immediate_in_order.cpp
 )
+
+if(UR_STATIC_ADAPTER_L0)
+    target_compile_definitions(ur_adapter_level_zero PUBLIC UR_STATIC_ADAPTER_LEVEL_ZERO)
+endif()
 
 if(NOT WIN32)
     target_sources(ur_adapter_level_zero
