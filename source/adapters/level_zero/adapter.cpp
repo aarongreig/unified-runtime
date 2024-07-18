@@ -135,7 +135,7 @@ ur_adapter_handle_t_::ur_adapter_handle_t_()
 
 void globalAdapterOnDemandCleanup() {
   if (GlobalAdapter) {
-    delete GlobalAdapter;
+    //delete GlobalAdapter;
   }
 }
 
