@@ -23,6 +23,9 @@ class ur_legacy_sink;
 
 struct ur_adapter_handle_t_ {
   ur_adapter_handle_t_();
+  ~ur_adapter_handle_t_() {
+        printf("delete adapter\n");
+  }
   std::atomic<uint32_t> RefCount = 0;
   std::mutex Mutex;
 
