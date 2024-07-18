@@ -1118,6 +1118,8 @@ ur_result_t urBindlessImagesReleaseExternalSemaphoreExp(
   return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
+} // namespace ur::level_zero
+
 ur_result_t ur_queue_handle_legacy_t_::bindlessImagesWaitExternalSemaphoreExp(
     ur_exp_interop_semaphore_handle_t hSemaphore, bool hasValue,
     uint64_t waitValue, uint32_t numEventsInWaitList,
@@ -1147,5 +1149,3 @@ ur_result_t ur_queue_handle_legacy_t_::bindlessImagesSignalExternalSemaphoreExp(
                 "{} function not implemented!", __FUNCTION__);
   return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
-
-} // namespace ur::level_zero
