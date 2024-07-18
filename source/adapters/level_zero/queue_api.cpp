@@ -272,7 +272,7 @@ ur_result_t urEnqueueWriteHostPipe(ur_queue_handle_t hQueue,
                                       phEventWaitList, phEvent);
 }
 ur_result_t urBindlessImagesImageCopyExp(
-    ur_queue_handle_t hQueue, void *pDst, void *pSrc,
+    ur_queue_handle_t hQueue, void *pDst, const void *pSrc,
     const ur_image_format_t *pImageFormat, const ur_image_desc_t *pImageDesc,
     ur_exp_image_copy_flags_t imageCopyFlags, ur_rect_offset_t srcOffset,
     ur_rect_offset_t dstOffset, ur_rect_region_t copyExtent,
