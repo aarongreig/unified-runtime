@@ -492,7 +492,7 @@ ur_result_t urBindlessImagesSampledImageCreateExp(
     const ur_image_format_t *pImageFormat, const ur_image_desc_t *pImageDesc,
     ur_sampler_handle_t hSampler, ur_exp_image_native_handle_t *phImage);
 ur_result_t urBindlessImagesImageCopyExp(
-    ur_queue_handle_t hQueue, void *pDst, void *pSrc,
+    ur_queue_handle_t hQueue, void *pDst, const void *pSrc,
     const ur_image_format_t *pImageFormat, const ur_image_desc_t *pImageDesc,
     ur_exp_image_copy_flags_t imageCopyFlags, ur_rect_offset_t srcOffset,
     ur_rect_offset_t dstOffset, ur_rect_region_t copyExtent,
@@ -528,7 +528,7 @@ ur_result_t urBindlessImagesImportExternalSemaphoreExp(
     ur_exp_external_semaphore_type_t semHandleType,
     ur_exp_interop_semaphore_desc_t *pInteropSemaphoreDesc,
     ur_exp_interop_semaphore_handle_t *phInteropSemaphore);
-ur_result_t urBindlessImagesDestroyExternalSemaphoreExp(
+ur_result_t urBindlessImagesReleaseExternalSemaphoreExp(
     ur_context_handle_t hContext, ur_device_handle_t hDevice,
     ur_exp_interop_semaphore_handle_t hInteropSemaphore);
 ur_result_t urBindlessImagesWaitExternalSemaphoreExp(
