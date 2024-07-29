@@ -28,10 +28,12 @@ UR_APIEXPORT ur_result_t UR_APICALL urKernelSetArgValue(
     ur_kernel_handle_t hKernel, uint32_t argIndex, size_t argSize,
     const ur_kernel_arg_value_properties_t *, const void *pArgValue) {
 
-  CL_RETURN_ON_FAILURE(clSetKernelArg(cl_adapter::cast<cl_kernel>(hKernel),
+  auto ClErr = clSetKernelArg(cl_adapter::cast<cl_kernel>(hKernel),
                                       cl_adapter::cast<cl_uint>(argIndex),
-                                      argSize, pArgValue));
-
+                                      argSize, pArgValue);
+  if(ClErr != CL_SUCCESS) {
+    CL_RETURN_ON_FAILURE(ClErr);
+  }
   return UR_RESULT_SUCCESS;
 }
 
