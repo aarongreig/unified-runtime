@@ -188,8 +188,26 @@ urKernelGetSubGroupInfo(ur_kernel_handle_t hKernel, ur_device_handle_t hDevice,
     InputValue = std::move(WgSizes);
     InputValueSize = MaxDims * sizeof(size_t);
   }
+  cl_platform_id platform;
+  CL_RETURN_ON_FAILURE(clGetDeviceInfo(cl_adapter::cast<cl_device_id>(hDevice),
+                                       CL_DEVICE_PLATFORM, sizeof(platform),
+                                       &platform, nullptr));
+  cl_int clGetKernelSubGroupInfo(
+    cl_kernel kernel,
+    cl_device_id device,
+    cl_kernel_sub_group_info param_name,
+    size_t input_value_size,
+    const void* input_value,
+    size_t param_value_size,
+    void* param_value,
+    size_t* param_value_size_ret);
+  using ApiFuncT =
+        cl_int(CL_API_CALL *)(cl_kernel, cl_device_id, cl_kernel_sub_group_info, size_t, const void*, size_t, void*, size_t*);
+  ApiFuncT FuncPtr =
+        reinterpret_cast<ApiFuncT>(clGetExtensionFunctionAddressForPlatform(
+            platform, "clGetKernelSubGroupInfoKHR"));
 
-  cl_int Ret = clGetKernelSubGroupInfo(cl_adapter::cast<cl_kernel>(hKernel),
+  cl_int Ret = FuncPtr(cl_adapter::cast<cl_kernel>(hKernel),
                                        cl_adapter::cast<cl_device_id>(hDevice),
                                        mapURKernelSubGroupInfoToCL(propName),
                                        InputValueSize, InputValue.get(),
