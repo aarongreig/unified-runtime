@@ -19,7 +19,7 @@ TEST_P(urMemBufferCreateWithNativeHandleTest, Success) {
     // We can however convert the native_handle back into a unified-runtime handle
     // and perform some query on it to verify that it works.
     ur_mem_handle_t mem = nullptr;
-    ASSERT_SUCCESS(
+    UUR_ASSERT_SUCCESS_OR_UNSUPPORTED(
         urMemBufferCreateWithNativeHandle(hNativeMem, context, nullptr, &mem));
     ASSERT_NE(mem, nullptr);
 
@@ -44,7 +44,7 @@ TEST_P(urMemBufferCreateWithNativeHandleTest, SuccessWithProperties) {
         /*.pNext =*/nullptr,
         /*.isNativeHandleOwned =*/false,
     };
-    ASSERT_SUCCESS(
+    UUR_ASSERT_SUCCESS_OR_UNSUPPORTED(
         urMemBufferCreateWithNativeHandle(hNativeMem, context, &props, &mem));
     ASSERT_NE(mem, nullptr);
 

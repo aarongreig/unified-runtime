@@ -14,7 +14,7 @@ TEST_P(urMemImageCreateWithNativeHandleTest, Success) {
         urMemGetNativeHandle(image, device, &native_handle));
 
     ur_mem_handle_t mem = nullptr;
-    ASSERT_SUCCESS(urMemImageCreateWithNativeHandle(
+    UUR_ASSERT_SUCCESS_OR_UNSUPPORTED(urMemImageCreateWithNativeHandle(
         native_handle, context, &image_format, &image_desc, nullptr, &mem));
     ASSERT_NE(nullptr, mem);
 
@@ -36,7 +36,7 @@ TEST_P(urMemImageCreateWithNativeHandleTest, SuccessWithProperties) {
     // We can't pass isNativeHandleOwned = true in the generic tests since
     // we always get the native handle from a UR object, and transferring
     // ownership from one UR object to another isn't allowed.
-    ASSERT_SUCCESS(urMemImageCreateWithNativeHandle(
+    UUR_ASSERT_SUCCESS_OR_UNSUPPORTED(urMemImageCreateWithNativeHandle(
         native_handle, context, &image_format, &image_desc, &props, &mem));
     ASSERT_NE(nullptr, mem);
 
@@ -49,7 +49,8 @@ TEST_P(urMemImageCreateWithNativeHandleTest, SuccessWithProperties) {
 
 TEST_P(urMemImageCreateWithNativeHandleTest, InvalidNullHandle) {
     ur_native_handle_t native_handle = 0;
-    ASSERT_SUCCESS(urMemGetNativeHandle(image, device, &native_handle));
+    UUR_ASSERT_SUCCESS_OR_UNSUPPORTED(
+        urMemGetNativeHandle(image, device, &native_handle));
 
     ur_mem_handle_t mem = nullptr;
     ASSERT_EQ_RESULT(
@@ -60,7 +61,8 @@ TEST_P(urMemImageCreateWithNativeHandleTest, InvalidNullHandle) {
 
 TEST_P(urMemImageCreateWithNativeHandleTest, InvalidNullPointer) {
     ur_native_handle_t native_handle = 0;
-    ASSERT_SUCCESS(urMemGetNativeHandle(image, device, &native_handle));
+    UUR_ASSERT_SUCCESS_OR_UNSUPPORTED(
+        urMemGetNativeHandle(image, device, &native_handle));
 
     ASSERT_EQ_RESULT(
         UR_RESULT_ERROR_INVALID_NULL_POINTER,
