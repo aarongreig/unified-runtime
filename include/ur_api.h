@@ -1564,7 +1564,8 @@ typedef enum ur_device_info_t {
     UR_DEVICE_INFO_PROFILE = 69,                                     ///< [char[]] Device profile
     UR_DEVICE_INFO_VERSION = 70,                                     ///< [char[]] Device version
     UR_DEVICE_INFO_BACKEND_RUNTIME_VERSION = 71,                     ///< [char[]] Version of backend runtime
-    UR_DEVICE_INFO_EXTENSIONS = 72,                                  ///< [char[]] Return a space separated list of extension names
+    UR_DEVICE_INFO_EXTENSIONS = 72,                                  ///< [char[]] Return a string representing any backend extensions supported
+                                                                     ///< by the adapter. Format and content is entirely adapter defined.
     UR_DEVICE_INFO_PRINTF_BUFFER_SIZE = 73,                          ///< [size_t] Maximum size in bytes of internal printf buffer
     UR_DEVICE_INFO_PREFERRED_INTEROP_USER_SYNC = 74,                 ///< [::ur_bool_t] prefer user synchronization when sharing object with
                                                                      ///< other API
@@ -1707,7 +1708,7 @@ typedef enum ur_device_info_t {
     UR_DEVICE_INFO_USM_P2P_SUPPORT_EXP = 0x4000,                     ///< [::ur_bool_t] Returns true if the device supports the USM P2P
                                                                      ///< experimental feature.
     UR_DEVICE_INFO_COOPERATIVE_KERNEL_SUPPORT_EXP = 0x5000,          ///< [::ur_bool_t] Returns true if the device supports cooperative kernels.
-    UR_DEVICE_INFO_MULTI_DEVICE_COMPILE_SUPPORT_EXP = 0x7000,        ///< [::ur_bool_t] Returns true if the device supports the multi device
+    UR_DEVICE_INFO_MULTI_DEVICE_COMPILE_SUPPORT_EXP = 0x6000,        ///< [::ur_bool_t] Returns true if the device supports the multi device
                                                                      ///< compile experimental feature.
     /// @cond
     UR_DEVICE_INFO_FORCE_UINT32 = 0x7fffffff
