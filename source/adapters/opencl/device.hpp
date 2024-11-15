@@ -17,4 +17,5 @@ ur_result_t getDeviceVersion(cl_device_id Dev, oclv::OpenCLVersion &Version);
 ur_result_t checkDeviceExtensions(cl_device_id Dev,
                                   const std::vector<std::string> &Exts,
                                   bool &Supported);
+bool isIntelFPGAEmuDevice(cl_device_id Dev);
 } // namespace cl_adapter

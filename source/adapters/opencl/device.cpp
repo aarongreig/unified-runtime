@@ -32,7 +32,7 @@ ur_result_t cl_adapter::getDeviceVersion(cl_device_id Dev,
   return UR_RESULT_SUCCESS;
 }
 
-static bool isIntelFPGAEmuDevice(cl_device_id Dev) {
+bool cl_adapter::isIntelFPGAEmuDevice(cl_device_id Dev) {
   size_t NameSize = 0;
   CL_RETURN_ON_FAILURE(
       clGetDeviceInfo(Dev, CL_DEVICE_NAME, 0, nullptr, &NameSize));
@@ -59,7 +59,7 @@ ur_result_t cl_adapter::checkDeviceExtensions(
     if (!(Supported = (ExtStr.find(Ext) != std::string::npos))) {
       // The Intel FPGA emulation device does actually support these, even if it
       // doesn't report them.
-      if (isIntelFPGAEmuDevice(Dev) &&
+      if (cl_adapter::isIntelFPGAEmuDevice(Dev) &&
           (Ext == "cl_intel_device_attribute_query" ||
            Ext == "cl_intel_required_subgroup_size")) {
         Supported = true;

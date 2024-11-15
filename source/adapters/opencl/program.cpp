@@ -368,22 +368,49 @@ UR_APIEXPORT ur_result_t UR_APICALL urProgramSetSpecializationConstants(
   UR_RETURN_ON_FAILURE(cl_adapter::getDevicesFromContext(
       cl_adapter::cast<ur_context_handle_t>(Ctx), DevicesInCtx));
 
-  cl_platform_id CurPlatform;
-  CL_RETURN_ON_FAILURE(clGetDeviceInfo((*DevicesInCtx)[0], CL_DEVICE_PLATFORM,
-                                       sizeof(cl_platform_id), &CurPlatform,
-                                       nullptr));
+  auto SetProgramSpecializationConstant =
+      ur::cl::getAdapter()->clSetProgramSpecializationConstant;
 
-  if (ur::cl::getAdapter()->clSetProgramSpecializationConstant) {
-    for (uint32_t i = 0; i < count; ++i) {
-      CL_RETURN_ON_FAILURE(
-          ur::cl::getAdapter()->clSetProgramSpecializationConstant(
-              CLProg, pSpecConstants[i].id, pSpecConstants[i].size,
-              pSpecConstants[i].pValue));
+  if (!SetProgramSpecializationConstant) {
+    bool IsFPGAEmu = false;
+    for (const auto &Dev : *DevicesInCtx) {
+      if (cl_adapter::isIntelFPGAEmuDevice(Dev)) {
+        IsFPGAEmu = true;
+      }
     }
-  } else {
-    return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
+
+    // This device needs a special workaround here: getting the address for its
+    // clSetProgramSpecializationConstant implementation directly from the
+    // library doesn't work on all platforms. The only reliable way to get this
+    // is via clGetExtensionFunctionAddressForPlatform. Note this is
+    // technically not a valid use of this entry point, but is necessary for
+    // the workaround.
+    if (IsFPGAEmu) {
+      cl_platform_id CurPlatform;
+      CL_RETURN_ON_FAILURE(
+          clGetDeviceInfo((*DevicesInCtx)[0], CL_DEVICE_PLATFORM,
+                          sizeof(cl_platform_id), &CurPlatform, nullptr));
+      using clSetProgramSpecializationConstant_fn = CL_API_ENTRY cl_int(
+          CL_API_CALL *)(cl_program program, cl_uint spec_id, size_t spec_size,
+                         const void *spec_value);
+      SetProgramSpecializationConstant =
+          reinterpret_cast<clSetProgramSpecializationConstant_fn>(
+              clGetExtensionFunctionAddressForPlatform(
+                  CurPlatform, "clSetProgramSpecializationConstant"));
+
+      if (!SetProgramSpecializationConstant) {
+        return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
+      }
+    } else {
+      return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
   }
 
+  for (uint32_t i = 0; i < count; ++i) {
+    CL_RETURN_ON_FAILURE(SetProgramSpecializationConstant(
+        CLProg, pSpecConstants[i].id, pSpecConstants[i].size,
+        pSpecConstants[i].pValue));
+  }
   return UR_RESULT_SUCCESS;
 }
 

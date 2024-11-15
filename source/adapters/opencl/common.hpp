@@ -193,8 +193,6 @@ CONSTFIX char SetKernelArgMemPointerName[] = "clSetKernelArgMemPointerINTEL";
 CONSTFIX char EnqueueMemFillName[] = "clEnqueueMemFillINTEL";
 CONSTFIX char EnqueueMemcpyName[] = "clEnqueueMemcpyINTEL";
 CONSTFIX char GetMemAllocInfoName[] = "clGetMemAllocInfoINTEL";
-CONSTFIX char SetProgramSpecializationConstantName[] =
-    "clSetProgramSpecializationConstant";
 CONSTFIX char GetDeviceFunctionPointerName[] =
     "clGetDeviceFunctionPointerINTEL";
 CONSTFIX char GetDeviceGlobalVariablePointerName[] =
