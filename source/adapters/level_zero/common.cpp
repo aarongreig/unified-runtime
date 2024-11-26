@@ -330,10 +330,8 @@ template <> zes_structure_type_t getZesStructureType<zes_mem_properties_t>() {
   return ZES_STRUCTURE_TYPE_MEM_PROPERTIES;
 }
 
-// Global variables for ZER_EXT_RESULT_ADAPTER_SPECIFIC_ERROR
-thread_local ur_result_t ErrorMessageCode = UR_RESULT_SUCCESS;
-thread_local char ErrorMessage[MaxMessageSize]{};
-thread_local int32_t ErrorAdapterNativeCode;
+// Global variable for ZER_EXT_RESULT_ADAPTER_SPECIFIC_ERROR
+thread_local ur::MessageHandler<256> MessageHandler;
 
 // Utility function for setting a message and warning
 [[maybe_unused]] void setErrorMessage(const char *pMessage,

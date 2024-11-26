@@ -103,22 +103,7 @@ void detail::ur::assertion(bool Condition, const char *Message) {
 }
 
 // Global variables for ZER_EXT_RESULT_ADAPTER_SPECIFIC_ERROR
-thread_local ur_result_t ErrorMessageCode = UR_RESULT_SUCCESS;
-thread_local char ErrorMessage[MaxMessageSize]{};
-
-// Utility function for setting a message and warning
-[[maybe_unused]] void setErrorMessage(const char *pMessage,
-                                      ur_result_t ErrorCode) {
-  assert(strlen(pMessage) < MaxMessageSize);
-  // Copy at most MaxMessageSize - 1 bytes to ensure the resultant string is
-  // always null terminated.
-#if defined(_WIN32)
-  strncpy_s(ErrorMessage, MaxMessageSize - 1, pMessage, strlen(pMessage));
-#else
-  strncpy(ErrorMessage, pMessage, MaxMessageSize - 1);
-#endif
-  ErrorMessageCode = ErrorCode;
-}
+thread_local ur::MessageHandler<256> MessageHandler;
 
 void setPluginSpecificMessage(CUresult cu_res) {
   const char *error_string;
@@ -130,6 +115,6 @@ void setPluginSpecificMessage(CUresult cu_res) {
   strcat(message, "\n");
   strcat(message, error_string);
 
-  setErrorMessage(message, UR_RESULT_ERROR_ADAPTER_SPECIFIC);
+  MessageHandler.setErrorMessage(message, UR_RESULT_ERROR_ADAPTER_SPECIFIC);
   free(message);
 }

@@ -18,6 +18,7 @@
 #include <ur_api.h>
 
 #include <atomic>
+#include <cassert>
 #include <iostream>
 #include <map>
 #include <optional>
@@ -501,4 +502,23 @@ static inline std::string groupDigits(Numeric numeric) {
 
 template <typename T> Spinlock<Rc<T>> AtomicSingleton<T>::instance;
 
+namespace ur {
+template <size_t MaxMessageSize> class MessageHandler {
+    ur_result_t ErrorMessageCode = UR_RESULT_SUCCESS;
+    char ErrorMessage[MaxMessageSize]{};
+
+  public:
+    void setErrorMessage(const char *pMessage, ur_result_t ErrorCode) {
+        assert(strlen(pMessage) < MaxMessageSize);
+        // Copy at most MaxMessageSize - 1 bytes to ensure the resultant string is
+        // always null terminated.
+        strncpy(ErrorMessage, pMessage, MaxMessageSize - 1);
+        ErrorMessageCode = ErrorCode;
+    }
+
+    const char *getErrorMessage() const { return ErrorMessage; }
+
+    ur_result_t getErrorMessageCode() const { return ErrorMessageCode; }
+};
+} // namespace ur
 #endif /* UR_UTIL_H */

@@ -168,10 +168,11 @@ UR_APIEXPORT ur_result_t UR_APICALL urEventGetInfo(ur_event_handle_t hEvent,
     // If the runtime owns the native handle, we have reference to the queue.
     // Otherwise, the event handle comes from an interop API with no RT refs.
     if (!hEvent->getQueue()) {
-      setErrorMessage("Command queue info cannot be queried for the event. The "
-                      "event object was created from a native event and has no "
-                      "valid reference to a command queue.",
-                      UR_RESULT_ERROR_INVALID_VALUE);
+      MessageHandler.setErrorMessage(
+          "Command queue info cannot be queried for the event. The "
+          "event object was created from a native event and has no "
+          "valid reference to a command queue.",
+          UR_RESULT_ERROR_INVALID_VALUE);
       return UR_RESULT_ERROR_ADAPTER_SPECIFIC;
     }
     return ReturnValue(hEvent->getQueue());

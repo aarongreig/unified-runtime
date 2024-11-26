@@ -125,9 +125,10 @@ ur_result_t setCuMemAdvise(CUdeviceptr DevPtr, size_t Size,
 
   for (auto &UnmappedFlag : UnmappedMemAdviceFlags) {
     if (URAdviceFlags & UnmappedFlag) {
-      setErrorMessage("Memory advice ignored because the CUDA backend does not "
-                      "support some of the specified flags",
-                      UR_RESULT_SUCCESS);
+      MessageHandler.setErrorMessage(
+          "Memory advice ignored because the CUDA backend does not "
+          "support some of the specified flags",
+          UR_RESULT_SUCCESS);
       return UR_RESULT_ERROR_ADAPTER_SPECIFIC;
     }
   }
@@ -283,8 +284,9 @@ setKernelParams([[maybe_unused]] const ur_context_handle_t Context,
     }
 
     if (LocalSize > static_cast<uint32_t>(Device->getMaxCapacityLocalMem())) {
-      setErrorMessage("Excessive allocation of local memory on the device",
-                      UR_RESULT_ERROR_ADAPTER_SPECIFIC);
+      MessageHandler.setErrorMessage(
+          "Excessive allocation of local memory on the device",
+          UR_RESULT_ERROR_ADAPTER_SPECIFIC);
       return UR_RESULT_ERROR_ADAPTER_SPECIFIC;
     }
 
@@ -293,17 +295,18 @@ setKernelParams([[maybe_unused]] const ur_context_handle_t Context,
       if (Device->getMaxChosenLocalMem() < 0) {
         bool EnvVarHasURPrefix =
             std::getenv("UR_CUDA_MAX_LOCAL_MEM_SIZE") != nullptr;
-        setErrorMessage(EnvVarHasURPrefix ? "Invalid value specified for "
-                                            "UR_CUDA_MAX_LOCAL_MEM_SIZE"
-                                          : "Invalid value specified for "
-                                            "SYCL_PI_CUDA_MAX_LOCAL_MEM_SIZE",
-                        UR_RESULT_ERROR_ADAPTER_SPECIFIC);
+        MessageHandler.setErrorMessage(EnvVarHasURPrefix
+                                           ? "Invalid value specified for "
+                                             "UR_CUDA_MAX_LOCAL_MEM_SIZE"
+                                           : "Invalid value specified for "
+                                             "SYCL_PI_CUDA_MAX_LOCAL_MEM_SIZE",
+                                       UR_RESULT_ERROR_ADAPTER_SPECIFIC);
         return UR_RESULT_ERROR_ADAPTER_SPECIFIC;
       }
       if (LocalSize > static_cast<uint32_t>(Device->getMaxChosenLocalMem())) {
         bool EnvVarHasURPrefix =
             std::getenv("UR_CUDA_MAX_LOCAL_MEM_SIZE") != nullptr;
-        setErrorMessage(
+        MessageHandler.setErrorMessage(
             EnvVarHasURPrefix
                 ? "Local memory for kernel exceeds the amount requested using "
                   "UR_CUDA_MAX_LOCAL_MEM_SIZE. Try increasing the value of "
@@ -686,8 +689,8 @@ UR_APIEXPORT ur_result_t UR_APICALL urEnqueueKernelLaunchCustomExp(
   return UR_RESULT_SUCCESS;
 #else
   [[maybe_unused]] auto _ = launchPropList;
-  setErrorMessage("This feature requires cuda 11.8 or later.",
-                  UR_RESULT_ERROR_ADAPTER_SPECIFIC);
+  MessageHandler.setErrorMessage("This feature requires cuda 11.8 or later.",
+                                 UR_RESULT_ERROR_ADAPTER_SPECIFIC);
   return UR_RESULT_ERROR_ADAPTER_SPECIFIC;
 #endif // CUDA_VERSION >= 11080
 }
@@ -1616,9 +1619,10 @@ UR_APIEXPORT ur_result_t UR_APICALL urEnqueueUSMPrefetch(
   // for managed memory. Therefore, ignore prefetch hint if concurrent managed
   // memory access is not available.
   if (!getAttribute(Device, CU_DEVICE_ATTRIBUTE_CONCURRENT_MANAGED_ACCESS)) {
-    setErrorMessage("Prefetch hint ignored as device does not support "
-                    "concurrent managed access",
-                    UR_RESULT_SUCCESS);
+    MessageHandler.setErrorMessage(
+        "Prefetch hint ignored as device does not support "
+        "concurrent managed access",
+        UR_RESULT_SUCCESS);
     return UR_RESULT_ERROR_ADAPTER_SPECIFIC;
   }
 
@@ -1626,8 +1630,9 @@ UR_APIEXPORT ur_result_t UR_APICALL urEnqueueUSMPrefetch(
   UR_CHECK_ERROR(cuPointerGetAttribute(
       &IsManaged, CU_POINTER_ATTRIBUTE_IS_MANAGED, (CUdeviceptr)pMem));
   if (!IsManaged) {
-    setErrorMessage("Prefetch hint ignored as prefetch only works with USM",
-                    UR_RESULT_SUCCESS);
+    MessageHandler.setErrorMessage(
+        "Prefetch hint ignored as prefetch only works with USM",
+        UR_RESULT_SUCCESS);
     return UR_RESULT_ERROR_ADAPTER_SPECIFIC;
   }
 
@@ -1678,9 +1683,10 @@ urEnqueueUSMAdvise(ur_queue_handle_t hQueue, const void *pMem, size_t size,
       (advice & UR_USM_ADVICE_FLAG_DEFAULT)) {
     ur_device_handle_t Device = hQueue->getDevice();
     if (!getAttribute(Device, CU_DEVICE_ATTRIBUTE_CONCURRENT_MANAGED_ACCESS)) {
-      setErrorMessage("Mem advise ignored as device does not support "
-                      "concurrent managed access",
-                      UR_RESULT_SUCCESS);
+      MessageHandler.setErrorMessage(
+          "Mem advise ignored as device does not support "
+          "concurrent managed access",
+          UR_RESULT_SUCCESS);
       return UR_RESULT_ERROR_ADAPTER_SPECIFIC;
     }
 
@@ -1693,7 +1699,7 @@ urEnqueueUSMAdvise(ur_queue_handle_t hQueue, const void *pMem, size_t size,
   UR_CHECK_ERROR(cuPointerGetAttribute(
       &IsManaged, CU_POINTER_ATTRIBUTE_IS_MANAGED, (CUdeviceptr)pMem));
   if (!IsManaged) {
-    setErrorMessage(
+    MessageHandler.setErrorMessage(
         "Memory advice ignored as memory advices only works with USM",
         UR_RESULT_SUCCESS);
     return UR_RESULT_ERROR_ADAPTER_SPECIFIC;

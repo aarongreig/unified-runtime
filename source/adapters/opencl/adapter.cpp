@@ -110,8 +110,8 @@ UR_APIEXPORT ur_result_t UR_APICALL urAdapterRelease(ur_adapter_handle_t) {
 
 UR_APIEXPORT ur_result_t UR_APICALL urAdapterGetLastError(
     ur_adapter_handle_t, const char **ppMessage, int32_t *pError) {
-  *ppMessage = cl_adapter::ErrorMessage;
-  *pError = cl_adapter::ErrorMessageCode;
+  *ppMessage = cl_adapter::MessageHandler.getErrorMessage();
+  *pError = cl_adapter::MessageHandler.getErrorMessageCode();
 
   return UR_RESULT_SUCCESS;
 }

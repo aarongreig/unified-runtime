@@ -13,6 +13,7 @@
 #include <map>
 #include <mutex>
 #include <ur/ur.hpp>
+#include <ur_util.hpp>
 
 /**
  * Call an OpenCL API and, if the result is not CL_SUCCESS, automatically map
@@ -149,13 +150,7 @@ inline const OpenCLVersion V3_0(3, 0);
 } // namespace oclv
 
 namespace cl_adapter {
-constexpr size_t MaxMessageSize = 256;
-extern thread_local int32_t ErrorMessageCode;
-extern thread_local char ErrorMessage[MaxMessageSize];
-
-// Utility function for setting a message and warning
-[[maybe_unused]] void setErrorMessage(const char *Message,
-                                      ur_result_t ErrorCode);
+extern ur::MessageHandler<256> MessageHandler;
 
 [[noreturn]] void die(const char *Message);
 

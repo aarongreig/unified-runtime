@@ -519,15 +519,7 @@ constexpr char ZE_SUPPORTED_EXTENSIONS[] =
     "cl_khr_il_program cl_khr_subgroups cl_intel_subgroups "
     "cl_intel_subgroups_short cl_intel_required_subgroup_size ";
 
-// Global variables for ZER_EXT_RESULT_ADAPTER_SPECIFIC_ERROR
-constexpr size_t MaxMessageSize = 256;
-extern thread_local ur_result_t ErrorMessageCode;
-extern thread_local char ErrorMessage[MaxMessageSize];
-extern thread_local int32_t ErrorAdapterNativeCode;
-
-// Utility function for setting a message and warning
-[[maybe_unused]] void setErrorMessage(const char *pMessage,
-                                      ur_result_t ErrorCode,
-                                      int32_t AdapterErrorCode);
+// Global variable for ZER_EXT_RESULT_ADAPTER_SPECIFIC_ERROR
+extern thread_local ur::MessageHandler<256> MessageHandler;
 
 #define L0_DRIVER_INORDER_MIN_VERSION 29534

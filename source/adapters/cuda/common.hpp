@@ -11,6 +11,7 @@
 
 #include <cuda.h>
 #include <ur/ur.hpp>
+#include <ur_util.hpp>
 
 ur_result_t mapErrorUR(CUresult Result);
 
@@ -32,13 +33,7 @@ void checkErrorUR(ur_result_t Result, const char *Function, int Line,
 
 std::string getCudaVersionString();
 
-constexpr size_t MaxMessageSize = 256;
-extern thread_local ur_result_t ErrorMessageCode;
-extern thread_local char ErrorMessage[MaxMessageSize];
-
-// Utility function for setting a message and warning
-[[maybe_unused]] void setErrorMessage(const char *pMessage,
-                                      ur_result_t ErrorCode);
+extern thread_local ur::MessageHandler<256> MessageHandler;
 
 void setPluginSpecificMessage(CUresult cu_res);
 
