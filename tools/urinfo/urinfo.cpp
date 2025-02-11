@@ -90,8 +90,7 @@ options:
     adapters.resize(numAdapters);
     UR_CHECK(urAdapterGet(numAdapters, adapters.data(), nullptr));
 
-    auto urDeviceGetFn =
-        ignore_device_selector ? urDeviceGet : urDeviceGetSelected;
+    auto urDeviceGetFn = urDeviceGet; // : urDeviceGetSelected;
 
     for (size_t adapterIndex = 0; adapterIndex < adapters.size();
          adapterIndex++) {

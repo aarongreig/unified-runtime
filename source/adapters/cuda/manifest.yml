@@ -1,0 +1,4 @@
+name: cuda
+backend: $X_BACKEND_CUDA
+device_types:
+    - $X_DEVICE_TYPE_GPU

@@ -12,8 +12,10 @@
 #define UR_ADAPTER_REGISTRY_HPP 1
 
 #include <array>
+#include <set>
 
 #include "logger/ur_logger.hpp"
+#include "registry.hpp"
 #include "ur_adapter_search.hpp"
 #include "ur_util.hpp"
 
@@ -164,7 +166,7 @@ private:
     bool acceptLibrary = true;
     std::optional<EnvVarMap> odsEnvMap;
     try {
-      odsEnvMap = getenv_to_map("ONEAPI_DEVICE_SELECTOR", false);
+      odsEnvMap = getenv_to_map("ONEAPI_DEVICE_SELECTOR", false, true);
 
     } catch (...) {
       // If the selector is malformed, then we ignore selector and return
@@ -255,6 +257,98 @@ private:
     return UR_RESULT_ERROR_INVALID_VALUE;
   }
 
+  const std::map<std::string, ur_adapter_backend_t> backendNameMap = {
+      {"opencl", UR_ADAPTER_BACKEND_OPENCL},
+      {"level_zero", UR_ADAPTER_BACKEND_LEVEL_ZERO},
+      {"cuda", UR_ADAPTER_BACKEND_CUDA},
+      {"hip", UR_ADAPTER_BACKEND_HIP},
+      {"native_cpu", UR_ADAPTER_BACKEND_NATIVE_CPU},
+  };
+
+  bool matchesBackend(const ur_adapter_manifest &manifest,
+                      std::string &backend) {
+    if (backend.front() == '*') {
+      return true;
+    }
+
+    auto backendIter = backendNameMap.find(backend);
+    if (backendIter == backendNameMap.end()) {
+      // boom (maybe translate this earlier during the "filter vetting" step?
+      //  although we do need the string for the * case...
+    }
+    if (backendIter->second == manifest.backend) {
+      return true;
+    }
+    return false;
+  }
+
+  const std::map<std::string, ur_device_type_t> deviceTypeMap = {
+      {"*", UR_DEVICE_TYPE_ALL},
+      {"cpu", UR_DEVICE_TYPE_CPU},
+      {"gpu", UR_DEVICE_TYPE_GPU},
+      {"fpga", UR_DEVICE_TYPE_FPGA}};
+
+  bool matchesDevices(const ur_adapter_manifest &manifest,
+                      const std::vector<std::string> &devices) {
+    for (auto deviceString : devices) {
+      auto deviceIter = deviceTypeMap.find(deviceString);
+      if (std::find(manifest.device_types.begin(), manifest.device_types.end(),
+                    deviceIter->second) != manifest.device_types.end()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool matchesFilter(const ur_adapter_manifest &manifest,
+                     std::pair<std::string, std::vector<std::string>> filter) {
+    if (!matchesBackend(manifest, filter.first)) {
+      return false;
+    }
+
+    return matchesDevices(manifest, filter.second);
+  }
+
+  ur_result_t getFilteredAdapterNames(std::set<std::string> &adapterNames) {
+    // do some filter pre-processing
+    // - ensure filters are valid (ignore invalid entries e.g. unrecognized
+    // backend name)
+    // - sort into positive and negative
+    std::optional<EnvVarMap> odsEnvMap;
+    try {
+      odsEnvMap = getenv_to_map("ONEAPI_DEVICE_SELECTOR", false, true);
+
+    } catch (...) {
+      // If the selector is malformed, then we ignore selector and return
+      // success.
+      logger::error("ERROR: missing backend, format of filter = "
+                    "'[!]backend:filterStrings'");
+      return UR_RESULT_SUCCESS;
+    }
+    logger::debug("getenv_to_map parsed env var and {} a map",
+                  (odsEnvMap.has_value() ? "produced" : "failed to produce"));
+
+    // if the ODS env var is not set at all, then pretend it was set to the
+    // default
+    using EnvVarMap = std::map<std::string, std::vector<std::string>>;
+    EnvVarMap mapODS =
+        odsEnvMap.has_value() ? odsEnvMap.value() : EnvVarMap{{"*", {"*"}}};
+
+    // for now just do
+    // for manifest : manifests
+    //   if any filter matches manifest, add manifest.name to adapterNames
+    // in future do if any positive matches and all negatives don't
+    for (auto &filterPair : mapODS) {
+      for (const auto &manifest : ur_adapter_manifests) {
+        if (matchesFilter(manifest, filterPair)) {
+          adapterNames.insert(manifest.library);
+        }
+      }
+    }
+
+    return UR_RESULT_SUCCESS;
+  }
+
   void discoverKnownAdapters() {
     auto searchPathsEnvOpt = getEnvAdapterSearchPaths();
     auto loaderLibPathOpt = getLoaderLibPath();
@@ -263,16 +357,22 @@ private:
 #else
     bool loaderPreFilter = getenv_tobool("UR_LOADER_PRELOAD_FILTER", true);
 #endif
-    for (const auto &adapterName : knownAdapterNames) {
 
-      if (loaderPreFilter) {
-        if (readPreFilterODS(adapterName) != UR_RESULT_SUCCESS) {
-          logger::debug("The adapter '{}' was removed based on the "
-                        "pre-filter from ONEAPI_DEVICE_SELECTOR.",
-                        adapterName);
-          continue;
-        }
+    std::set<std::string> adapterNames;
+    if (loaderPreFilter) {
+      // for each entry in filter map, check against each manifest and add it to
+      // the list if it matches
+      getFilteredAdapterNames(adapterNames);
+    } else {
+      for (const auto &manifest : ur_adapter_manifests) {
+        adapterNames.insert(manifest.name);
       }
+    }
+
+    for (const auto &adapterName : adapterNames) {
+      // need something to add the libur_adapter_ to the name since that isn't
+      // in the manifest
+
       std::vector<fs::path> loadPaths;
 
       // Adapter search order:
