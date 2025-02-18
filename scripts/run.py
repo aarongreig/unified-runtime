@@ -146,6 +146,7 @@ def main():
         }
 
     for section in configParser.sections():
+        print("{0} is a section".format(section))
         input['configs'].append({
             'name'     : section,
             'namespace': configParser.get(section,'namespace'),

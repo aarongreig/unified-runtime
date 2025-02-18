@@ -17,7 +17,7 @@ const std::vector<ur_adapter_manifest> ur_adapter_manifests = {
      MAKE_LIBRARY_NAME("ur_adapter_opencl", "0"),
      UR_ADAPTER_BACKEND_OPENCL,
      {// this should be changed to DEVICE_TYPE_ALL in the final thing
-      UR_DEVICE_TYPE_CPU, UR_DEVICE_TYPE_GPU}},
+      UR_DEVICE_TYPE_CPU, UR_DEVICE_TYPE_GPU, UR_DEVICE_TYPE_FPGA}},
     {"cuda",
      MAKE_LIBRARY_NAME("ur_adapter_cuda", "0"),
      UR_ADAPTER_BACKEND_CUDA,

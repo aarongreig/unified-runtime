@@ -291,6 +291,9 @@ private:
   bool matchesDevices(const ur_adapter_manifest &manifest,
                       const std::vector<std::string> &devices) {
     for (auto deviceString : devices) {
+      if (deviceString.front() == '*') {
+        return true;
+      }
       auto deviceIter = deviceTypeMap.find(deviceString);
       if (std::find(manifest.device_types.begin(), manifest.device_types.end(),
                     deviceIter->second) != manifest.device_types.end()) {
@@ -365,7 +368,7 @@ private:
       getFilteredAdapterNames(adapterNames);
     } else {
       for (const auto &manifest : ur_adapter_manifests) {
-        adapterNames.insert(manifest.name);
+        adapterNames.insert(manifest.library);
       }
     }
 

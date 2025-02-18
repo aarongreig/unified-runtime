@@ -48,7 +48,9 @@ extern "C" {
 #endif
 %endif
 %for obj in spec['objects']:
-%if not re.match(r"class", obj['type']):
+%if "manifest" in obj['type']:
+<%continue%>
+%elif not re.match(r"class", obj['type']):
 ///////////////////////////////////////////////////////////////////////////////
 ## MACRO ######################################################################
 %if re.match(r"macro", obj['type']):

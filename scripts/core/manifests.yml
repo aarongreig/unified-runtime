@@ -1,0 +1,12 @@
+--- #--------------------------------------------------------------------------
+type: header
+desc: "Intel $OneApi Unified Runtime adapter manifests"
+ordinal: "99"
+--- #--------------------------------------------------------------------------
+type: manifest
+name: opencl
+backend: $X_BACKEND_OPENCL
+device_types:
+    - $X_DEVICE_TYPE_CPU
+    - $X_DEVICE_TYPE_GPU
+    - $X_DEVICE_TYPE_FGPA

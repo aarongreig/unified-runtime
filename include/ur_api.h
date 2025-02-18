@@ -11888,6 +11888,13 @@ UR_APIEXPORT ur_result_t UR_APICALL urUsmP2PPeerAccessGetInfoExp(
 #if !defined(__GNUC__)
 #pragma endregion
 #endif
+// Intel 'oneAPI' Unified Runtime adapter manifests
+#if !defined(__GNUC__)
+#pragma region manifests
+#endif
+#if !defined(__GNUC__)
+#pragma endregion
+#endif
 // Intel 'oneAPI' Unified Runtime Experimental API for low-power events API
 #if !defined(__GNUC__)
 #pragma region low_power_events_(experimental)
