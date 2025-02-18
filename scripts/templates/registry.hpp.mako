@@ -1,10 +1,5 @@
 <%!
-import re
 from templates import helper as th
-%><%
-maybe like
-manifests = th.get_manifests(specs, namespace, tags)
-??
 %>/*
  *
  * Copyright (C) 2025 Intel Corporation
@@ -15,7 +10,7 @@ manifests = th.get_manifests(specs, namespace, tags)
  *
  * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
  *
- * @file ${filename}.h
+ * @file ${name}.hpp
  *
  */
 
@@ -38,14 +33,14 @@ struct ur_adapter_manifest {
 };
 
 const std::vector<ur_adapter_manifest> ur_adapter_manifests = {
-%for manifest in manifests:
+%for manifest in th.get_adapter_manifests(specs):
 {
-  {name},
-  MAKE_LIBRARY_NAME("ur_adapter_{name}", "0"),
-  UR_ADAPTER_BACKEND_{BACKEND},
+  "${manifest['name']}",
+  MAKE_LIBRARY_NAME("ur_adapter_${manifest['name']}", "0"),
+  ${th.subt(namespace, tags, manifest['backend'])},
   {
-  %for device_type in manifest.device_types:
-    {device_type}
+  %for device_type in manifest['device_types']:
+    ${th.subt(namespace, tags, device_type)},
   %endfor
   }
 },

@@ -199,7 +199,7 @@ def _mako_lib_cpp(path, namespace, tags, version, specs, meta):
 
     name = "%s_registry"%(namespace)
     filename = "%s.hpp"%name
-    fout os.path.join(path, filename)
+    fout = os.path.join(path, filename)
 
     print("Generating %s..."%fout)
     loc += util.makoWrite(

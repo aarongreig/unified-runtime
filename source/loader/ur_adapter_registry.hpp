@@ -15,8 +15,8 @@
 #include <set>
 
 #include "logger/ur_logger.hpp"
-#include "registry.hpp"
 #include "ur_adapter_search.hpp"
+#include "ur_registry.hpp"
 #include "ur_util.hpp"
 
 namespace fs = filesystem;
